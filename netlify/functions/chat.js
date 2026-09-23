@@ -1,3 +1,4 @@
+// v2
 const https = require('https');
 
 const SYSTEM_PROMPT = `You are Moritz, a personal AI platform built by Caleb for his home network.
