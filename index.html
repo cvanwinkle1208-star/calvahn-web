@@ -18,14 +18,16 @@
     --blue:    #3b82f6;
     --dim:     #94a3b8;
     --purple:  #8b5cf6;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
   }
 
   html, body {
     min-height: 100vh;
     background: var(--bg);
     color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
-    font-size: 14px;
+    font-family: var(--font-sans);
+    font-size: 15px;
     line-height: 1.6;
   }
 
@@ -34,13 +36,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 24px;
+    padding: 48px 24px 64px;
     min-height: 100vh;
   }
 
   .wrap {
     width: 100%;
-    max-width: 680px;
+    max-width: 640px;
   }
 
   /* ── Status bar ─────────────────────────────── */
@@ -49,15 +51,17 @@
     align-items: center;
     gap: 8px;
     font-size: 11px;
+    font-family: var(--font-mono);
     color: var(--muted);
-    letter-spacing: 1.5px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 64px;
+    margin-bottom: 56px;
   }
   .status-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--green);
+    flex-shrink: 0;
     animation: pulse 2.5s ease-in-out infinite;
   }
   @keyframes pulse {
@@ -66,133 +70,148 @@
   }
 
   /* ── Hero ───────────────────────────────────── */
-  .hero { margin-bottom: 48px; }
+  .hero { margin-bottom: 36px; }
 
   .wordmark {
-    font-size: clamp(52px, 10vw, 84px);
+    font-family: var(--font-mono);
+    font-size: clamp(52px, 10vw, 80px);
     font-weight: 800;
     letter-spacing: -2px;
     line-height: 1;
     color: var(--text);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
   .tagline {
-    font-size: clamp(14px, 2.5vw, 17px);
+    font-size: clamp(16px, 2.8vw, 20px);
     color: var(--dim);
     font-weight: 400;
+    max-width: 460px;
+    line-height: 1.55;
+  }
+  .tagline strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── CTA ────────────────────────────────────── */
+  .cta-wrap {
+    margin: 32px 0 40px;
+  }
+
+  #meet-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--blue);
+    border: none;
+    border-radius: 10px;
+    padding: 15px 28px;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
     letter-spacing: 0.2px;
-    max-width: 480px;
-    line-height: 1.7;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 0 0 0 rgba(59,130,246,0.4);
+  }
+  #meet-btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59,130,246,0.25);
+  }
+  #meet-btn:active { transform: translateY(0); }
+  #meet-btn .arrow {
+    font-size: 17px;
+    transition: transform 0.18s;
+  }
+  #meet-btn:hover .arrow { transform: translateX(4px); }
+
+  .cta-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    padding-left: 2px;
+  }
+
+  /* ── Live Pulse ─────────────────────────────── */
+  .pulse-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    margin-bottom: 44px;
+    overflow: hidden;
+    transition: border-color 0.4s;
+  }
+  .pulse-bar.live { border-color: rgba(34,197,94,0.25); }
+
+  .pulse-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 16px 24px;
+    flex: 1;
+  }
+  .pulse-stat + .pulse-stat {
+    border-left: 1px solid var(--border);
+  }
+  .pulse-val {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .pulse-val.green  { color: var(--green); }
+  .pulse-val.blue   { color: var(--blue); }
+  .pulse-val.purple { color: var(--purple); }
+  .pulse-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    text-align: center;
   }
 
   /* ── Divider ────────────────────────────────── */
   .divider {
     border: none;
     border-top: 1px solid var(--border);
-    margin: 40px 0;
+    margin: 0 0 36px;
   }
 
   /* ── About ──────────────────────────────────── */
   .about {
     color: var(--muted);
-    font-size: 13px;
-    line-height: 1.9;
-    margin-bottom: 48px;
+    font-size: 14px;
+    line-height: 1.85;
+    margin-bottom: 0;
     max-width: 560px;
   }
   .about strong { color: var(--dim); font-weight: 600; }
 
-  /* ── Live Pulse ─────────────────────────────── */
-  .pulse-bar {
+  /* ── Footer ─────────────────────────────────── */
+  footer {
+    margin-top: 56px;
     display: flex;
     align-items: center;
-    gap: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 20px;
-    margin-bottom: 32px;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    transition: border-color 0.4s;
-  }
-  .pulse-bar.live { border-color: rgba(34,197,94,0.3); }
-  .pulse-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 60px;
-  }
-  .pulse-val {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1;
-    letter-spacing: -0.5px;
-  }
-  .pulse-val.green { color: var(--green); }
-  .pulse-val.blue  { color: var(--blue); }
-  .pulse-val.purple { color: var(--purple); }
-  .pulse-lbl {
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    gap: 16px;
+    font-size: 12px;
     color: var(--muted);
   }
-  .pulse-sep {
-    width: 1px; height: 28px;
-    background: var(--border);
-    flex-shrink: 0;
-  }
-  .pulse-age {
-    margin-left: auto;
-    font-size: 10px;
+  .footer-sep { opacity: 0.3; }
+  .footer-link {
     color: var(--muted);
-    font-style: italic;
+    text-decoration: none;
+    transition: color 0.15s;
   }
-
-  /* ── Meet Moritz Button ─────────────────────── */
-  .meet-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 0;
-  }
-  .meet-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  #meet-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: transparent;
-    border: 1px solid rgba(59,130,246,0.4);
-    border-radius: 8px;
-    padding: 14px 24px;
-    color: var(--blue);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s;
-  }
-  #meet-btn:hover {
-    background: rgba(59,130,246,0.08);
-    border-color: rgba(59,130,246,0.7);
-    transform: translateY(-1px);
-  }
-  #meet-btn .arrow {
-    font-size: 18px;
-    transition: transform 0.2s;
-  }
-  #meet-btn:hover .arrow { transform: translateX(3px); }
+  .footer-link:hover { color: var(--dim); }
 
   /* ── Chat Drawer ────────────────────────────── */
   #chat-drawer {
@@ -201,29 +220,26 @@
     height: 0;
     overflow: hidden;
     z-index: 100;
-    transition: height 0.38s cubic-bezier(0.32, 0, 0.12, 1);
+    transition: height 0.36s cubic-bezier(0.32, 0, 0.12, 1);
   }
   #chat-drawer.open { height: min(580px, 90vh); }
 
   .drawer-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(8, 11, 16, 0.7);
+    background: rgba(8, 11, 16, 0.75);
     z-index: 99;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.28s;
   }
-  .drawer-backdrop.show {
-    opacity: 1;
-    pointer-events: all;
-  }
+  .drawer-backdrop.show { opacity: 1; pointer-events: all; }
 
   .drawer-inner {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    background: #0a0f18;
-    border-top: 1px solid rgba(59,130,246,0.25);
+    background: #0b1018;
+    border-top: 1px solid rgba(59,130,246,0.22);
     border-radius: 16px 16px 0 0;
     display: flex;
     flex-direction: column;
@@ -243,17 +259,22 @@
   .drawer-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: 9px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
-    letter-spacing: 0.3px;
   }
   .drawer-title-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
     background: var(--green);
     animation: pulse 2.5s infinite;
+  }
+  .drawer-title-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 2px;
   }
   .drawer-close {
     width: 30px; height: 30px;
@@ -263,11 +284,14 @@
     color: var(--muted);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: background 0.15s, color 0.15s;
-    line-height: 1;
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
-  .drawer-close:hover { background: rgba(239,68,68,0.12); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+  .drawer-close:hover {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.3);
+  }
 
   /* ── Messages ───────────────────────────────── */
   #messages {
@@ -279,55 +303,53 @@
     gap: 14px;
     scroll-behavior: smooth;
   }
-  #messages::-webkit-scrollbar { width: 4px; }
-  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar { width: 3px; }
   #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
   .msg {
     display: flex;
     flex-direction: column;
-    max-width: 82%;
-    animation: msgIn 0.22s ease;
+    max-width: 80%;
+    animation: msgIn 0.2s ease;
   }
   @keyframes msgIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(7px); }
     to   { opacity: 1; transform: none; }
   }
   .msg.moritz { align-self: flex-start; }
   .msg.user   { align-self: flex-end; }
 
   .msg-name {
-    font-size: 9px;
-    letter-spacing: 1.5px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     padding: 0 4px;
   }
   .msg.moritz .msg-name { color: var(--green); }
   .msg.user   .msg-name { color: var(--blue); text-align: right; }
 
   .msg-bubble {
-    padding: 10px 14px;
+    padding: 11px 15px;
     border-radius: 12px;
-    font-size: 13px;
-    line-height: 1.65;
+    font-size: 14px;
+    line-height: 1.6;
+    font-family: var(--font-sans);
   }
   .msg.moritz .msg-bubble {
     background: #121c2e;
-    border: 1px solid rgba(59,130,246,0.18);
+    border: 1px solid rgba(59,130,246,0.15);
     color: var(--text);
     border-radius: 4px 12px 12px 12px;
   }
   .msg.user .msg-bubble {
-    background: rgba(59,130,246,0.15);
-    border: 1px solid rgba(59,130,246,0.25);
+    background: rgba(59,130,246,0.14);
+    border: 1px solid rgba(59,130,246,0.22);
     color: var(--text);
     border-radius: 12px 4px 12px 12px;
   }
-  .msg-bubble.thinking {
-    color: var(--muted);
-    font-style: italic;
-  }
+  .msg-bubble.thinking { color: var(--muted); font-style: italic; }
 
   /* ── Input bar ──────────────────────────────── */
   .input-bar {
@@ -336,7 +358,7 @@
     padding: 14px 16px;
     border-top: 1px solid var(--border);
     flex-shrink: 0;
-    background: #0a0f18;
+    background: #0b1018;
   }
   #chat-input {
     flex: 1;
@@ -345,11 +367,10 @@
     border-radius: 8px;
     padding: 10px 14px;
     color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     outline: none;
     transition: border-color 0.15s;
-    resize: none;
   }
   #chat-input::placeholder { color: var(--muted); }
   #chat-input:focus { border-color: rgba(59,130,246,0.4); }
@@ -359,9 +380,9 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 10px 18px;
-    font-family: inherit;
-    font-size: 12px;
+    padding: 10px 20px;
+    font-family: var(--font-sans);
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, opacity 0.15s;
@@ -371,17 +392,10 @@
   #chat-send:hover    { background: #2563eb; }
   #chat-send:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  /* ── Footer ─────────────────────────────────── */
-  footer {
-    margin-top: 72px;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-  }
-
   /* ── Mobile ─────────────────────────────────── */
   @media (max-width: 480px) {
-    .pulse-bar { flex-wrap: wrap; gap: 14px; }
+    .pulse-stat { padding: 14px 16px; }
+    .pulse-val  { font-size: 18px; }
   }
 </style>
 </head>
@@ -390,51 +404,52 @@
 
   <div class="status-bar">
     <span class="status-dot"></span>
-    <span id="status-text">System online</span>
+    <span id="status-text">Online</span>
   </div>
 
   <div class="hero">
     <div class="wordmark">Moritz</div>
-    <div class="tagline">A governed intelligence built to keep technology working — quietly, reliably, without asking for help.</div>
+    <div class="tagline">Your technology, <strong>always on.</strong><br>Moritz watches everything so you don't have to.</div>
+  </div>
+
+  <div class="cta-wrap">
+    <button id="meet-btn" onclick="openChat()">
+      Meet Moritz <span class="arrow">→</span>
+    </button>
+    <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
+  </div>
+
+  <div id="pulse-bar" class="pulse-bar">
+    <div class="pulse-stat">
+      <span class="pulse-val green" id="p-nodes">—</span>
+      <span class="pulse-lbl">Systems running</span>
+    </div>
+    <div class="pulse-stat">
+      <span class="pulse-val blue" id="p-svc">—</span>
+      <span class="pulse-lbl">Active services</span>
+    </div>
+    <div class="pulse-stat">
+      <span class="pulse-val purple" id="p-vram">—</span>
+      <span class="pulse-lbl">AI inference</span>
+    </div>
   </div>
 
   <hr class="divider">
 
   <p class="about">
     Most technology fails because no one is watching. <strong>Moritz watches.</strong>
-    He runs on a private distributed platform, monitors every node, reasons about what matters,
+    He runs on a private distributed platform, monitors every system, reasons about what matters,
     and acts — without waking anyone up unless he has to.
     He learns from every outcome and gets better at the job over time.
     The people who rely on him don't need to understand technology.
     <strong>That's the point.</strong>
   </p>
 
-  <div id="pulse-bar" class="pulse-bar">
-    <div class="pulse-stat">
-      <span class="pulse-val green" id="p-nodes">—</span>
-      <span class="pulse-lbl">Nodes Online</span>
-    </div>
-    <div class="pulse-sep"></div>
-    <div class="pulse-stat">
-      <span class="pulse-val blue" id="p-svc">—</span>
-      <span class="pulse-lbl">Services</span>
-    </div>
-    <div class="pulse-sep"></div>
-    <div class="pulse-stat">
-      <span class="pulse-val purple" id="p-vram">—</span>
-      <span class="pulse-lbl">GPU VRAM</span>
-    </div>
-    <span class="pulse-age" id="p-age"></span>
-  </div>
-
-  <div class="meet-wrap">
-    <div class="meet-label">Want to see what's possible?</div>
-    <button id="meet-btn" onclick="openChat()">
-      Meet Moritz <span class="arrow">→</span>
-    </button>
-  </div>
-
-  <footer>Built on a private platform. Not a product. Not yet.</footer>
+  <footer>
+    <span>Built by one person, for everything that shouldn't fail</span>
+    <span class="footer-sep">·</span>
+    <span>Private. Distributed. Not for sale — yet.</span>
+  </footer>
 
 </div>
 
@@ -448,12 +463,13 @@
       <div class="drawer-title">
         <div class="drawer-title-dot"></div>
         Moritz
+        <span class="drawer-title-sub">— he's listening</span>
       </div>
       <button class="drawer-close" onclick="closeChat()" title="Close">✕</button>
     </div>
     <div id="messages"></div>
     <div class="input-bar">
-      <input id="chat-input" type="text" placeholder="Type your message…" maxlength="400" autocomplete="off" spellcheck="false">
+      <input id="chat-input" type="text" placeholder="Say something…" maxlength="400" autocomplete="off" spellcheck="false">
       <button id="chat-send" onclick="sendMsg()">Send</button>
     </div>
   </div>
@@ -472,12 +488,9 @@ async function fetchPulse() {
     document.getElementById('p-nodes').textContent = d.nodes_online + '/' + d.nodes_total;
     document.getElementById('p-svc').textContent   = d.services ?? '—';
     document.getElementById('p-vram').textContent  = d.vram_gb ? d.vram_gb + ' GB' : '—';
-    if (d.hb_age_s != null) {
-      const age = d.hb_age_s < 60 ? d.hb_age_s + 's ago' : Math.round(d.hb_age_s / 60) + 'm ago';
-      document.getElementById('p-age').textContent = 'heartbeat ' + age;
-    }
     document.getElementById('pulse-bar').classList.add('live');
-  } catch { /* silent — pulse is informational */ }
+    document.getElementById('status-text').textContent = 'Online · ' + d.nodes_online + ' systems active';
+  } catch { /* silent */ }
 }
 fetchPulse();
 setInterval(fetchPulse, 10000);
@@ -493,9 +506,7 @@ function speak(text) {
   const clean = text.replace(/\[END_CONVERSATION\]/g, '').trim();
   if (!clean) return;
   const utt = new SpeechSynthesisUtterance(clean);
-  utt.rate = 1.0;
-  utt.pitch = 1.0;
-  utt.volume = 1.0;
+  utt.rate = 1.0; utt.pitch = 1.0; utt.volume = 1.0;
   const preferred = voices.find(v => /Google.*English|Samantha|Daniel|Alex/i.test(v.name))
                  || voices.find(v => /en[-_]US/i.test(v.lang))
                  || voices[0];
@@ -503,14 +514,14 @@ function speak(text) {
   window.speechSynthesis.speak(utt);
 }
 
-// ── Conversation State ────────────────────────────────────────────────────────
-let messages   = [];
-let userName   = '';
-let userEmail  = '';
-let intents    = [];
-let busy       = false;
-let ended      = false;
-let geoData    = null;
+// ── State ─────────────────────────────────────────────────────────────────────
+let messages  = [];
+let userName  = '';
+let userEmail = '';
+let intents   = [];
+let busy      = false;
+let ended     = false;
+let geoData   = null;
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
 function openChat() {
@@ -537,9 +548,7 @@ function addMsg(role, text, thinking) {
   const div  = document.createElement('div');
   div.className = 'msg ' + role;
   const name   = role === 'moritz' ? 'Moritz' : 'You';
-  const bubble = thinking ? '<div class="msg-bubble thinking">' + esc(text) + '</div>'
-                           : '<div class="msg-bubble">' + esc(text) + '</div>';
-  div.innerHTML = '<div class="msg-name">' + name + '</div>' + bubble;
+  div.innerHTML = `<div class="msg-name">${name}</div><div class="msg-bubble${thinking?' thinking':''}">${esc(text)}</div>`;
   div.dataset.thinking = thinking ? '1' : '';
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
@@ -576,13 +585,12 @@ async function sendMsg() {
   messages.push({ role: 'user', content: txt });
   addMsg('user', txt);
 
-  // Naive intent/name extraction from user messages (supplementary — Claude handles primary)
   if (!userName && messages.filter(m => m.role === 'user').length === 1) {
     const words = txt.split(/\s+/);
     if (words.length <= 3) userName = words[words.length - 1].replace(/[^a-zA-Z]/g, '');
   }
 
-  const thinkEl = addMsg('moritz', 'Thinking…', true);
+  addMsg('moritz', 'Thinking…', true);
 
   try {
     const res  = await fetch(BRAIN + '/chat', {
@@ -592,7 +600,8 @@ async function sendMsg() {
       signal: AbortSignal.timeout(15000),
     });
     const data = await res.json();
-    const reply = data.response || "I'm having trouble right now — try again in a moment!";
+    const reply = data.response || "Give me just a second — try again!";
+
     if (data.geo && !geoData) geoData = data.geo;
 
     removeThinking();
@@ -601,20 +610,20 @@ async function sendMsg() {
     addMsg('moritz', cleanReply);
     speak(cleanReply);
 
-    // Extract email if present
     const emailMatch = txt.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
     if (emailMatch) userEmail = emailMatch[0];
 
     if (reply.includes('[END_CONVERSATION]')) {
       ended = true;
-      document.getElementById('chat-input').placeholder = '— conversation complete —';
+      document.getElementById('chat-input').disabled = true;
+      document.getElementById('chat-input').placeholder = '— thanks for chatting —';
       document.getElementById('chat-send').disabled = true;
       logConversation();
       return;
     }
   } catch {
     removeThinking();
-    const err = "Connection dropped — try again!";
+    const err = "Lost my train of thought — try again!";
     messages.push({ role: 'assistant', content: err });
     addMsg('moritz', err);
     speak(err);
