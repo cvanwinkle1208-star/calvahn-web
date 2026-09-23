@@ -510,6 +510,7 @@ let userEmail  = '';
 let intents    = [];
 let busy       = false;
 let ended      = false;
+let geoData    = null;
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
 function openChat() {
@@ -587,11 +588,12 @@ async function sendMsg() {
     const res  = await fetch(BRAIN + '/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, geo: geoData }),
       signal: AbortSignal.timeout(15000),
     });
     const data = await res.json();
     const reply = data.response || "I'm having trouble right now — try again in a moment!";
+    if (data.geo && !geoData) geoData = data.geo;
 
     removeThinking();
     const cleanReply = reply.replace(/\[END_CONVERSATION\]/g, '').trim();
@@ -628,7 +630,7 @@ async function logConversation() {
     await fetch(BRAIN + '/chat-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: userName, email: userEmail, intents, messages }),
+      body: JSON.stringify({ name: userName, email: userEmail, intents, messages, geo: geoData }),
     });
   } catch { /* best-effort */ }
 }
