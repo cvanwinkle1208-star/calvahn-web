@@ -461,12 +461,12 @@
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
-const BRAIN = 'https://dashboard.calvahn.com';
+const BRAIN = '/.netlify/functions';
 
 // ── Live Pulse ────────────────────────────────────────────────────────────────
 async function fetchPulse() {
   try {
-    const r = await fetch(BRAIN + '/api/public-status', { signal: AbortSignal.timeout(6000) });
+    const r = await fetch(BRAIN + '/public-status', { signal: AbortSignal.timeout(6000) });
     if (!r.ok) return;
     const d = await r.json();
     document.getElementById('p-nodes').textContent = d.nodes_online + '/' + d.nodes_total;
@@ -584,7 +584,7 @@ async function sendMsg() {
   const thinkEl = addMsg('moritz', 'Thinking…', true);
 
   try {
-    const res  = await fetch(BRAIN + '/api/chat', {
+    const res  = await fetch(BRAIN + '/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages }),
@@ -625,7 +625,7 @@ async function sendMsg() {
 
 async function logConversation() {
   try {
-    await fetch(BRAIN + '/api/chat-log', {
+    await fetch(BRAIN + '/chat-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, email: userEmail, intents, messages }),
