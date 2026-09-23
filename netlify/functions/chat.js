@@ -89,7 +89,7 @@ exports.handler = async (event) => {
   // Geo lookup on first message only — client caches and passes back
   let geo = geoIn;
   if (!geo && messages.length === 1 && ip !== 'unknown') {
-    const geoData = await httpsGet(`https://ip-api.com/json/${ip}?fields=city,regionName,country,countryCode`);
+    const geoData = await httpsGet(`https://ip-api.com/json/${ip}?fields=city,regionName,country,countryCode,lat,lon`);
     if (geoData && geoData.country) {
       geo = { city: geoData.city, region: geoData.regionName, country: geoData.country, countryCode: geoData.countryCode, ip };
     }
