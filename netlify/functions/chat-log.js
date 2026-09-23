@@ -32,6 +32,8 @@ exports.handler = async (event) => {
     geo:      body.geo      || null,
     intents:  body.intents  || [],
     messages: body.messages || [],
+    physical: body.physical || null,
+    inferred: body.inferred || null,
     ip,
   });
 
@@ -56,7 +58,6 @@ exports.handler = async (event) => {
     }
   }
 
-  // Always succeed to the browser regardless of relay outcome
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
