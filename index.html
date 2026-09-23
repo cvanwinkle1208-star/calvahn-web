@@ -222,7 +222,7 @@
     z-index: 100;
     transition: height 0.36s cubic-bezier(0.32, 0, 0.12, 1);
   }
-  #chat-drawer.open { height: min(580px, 90vh); }
+  #chat-drawer.open { height: min(680px, 95vh); }
 
   .drawer-backdrop {
     position: fixed;
@@ -291,6 +291,38 @@
     background: rgba(239,68,68,0.1);
     color: #ef4444;
     border-color: rgba(239,68,68,0.3);
+  }
+
+  /* ── Avatar ─────────────────────────────────── */
+  .avatar-wrap {
+    height: 170px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 60%, rgba(59,130,246,0.05) 0%, transparent 68%);
+    border-bottom: 1px solid rgba(59,130,246,0.07);
+    overflow: hidden;
+    position: relative;
+  }
+  #moritz-canvas {
+    display: block;
+    opacity: 0.72;
+    image-rendering: pixelated;
+  }
+  /* subtle scanline overlay */
+  .avatar-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.06) 3px,
+      rgba(0,0,0,0.06) 4px
+    );
+    pointer-events: none;
   }
 
   /* ── Messages ───────────────────────────────── */
@@ -396,6 +428,8 @@
   @media (max-width: 480px) {
     .pulse-stat { padding: 14px 16px; }
     .pulse-val  { font-size: 18px; }
+    .avatar-wrap { height: 140px; }
+    #chat-drawer.open { height: min(640px, 95vh); }
   }
 </style>
 </head>
@@ -467,6 +501,12 @@
       </div>
       <button class="drawer-close" onclick="closeChat()" title="Close">✕</button>
     </div>
+
+    <!-- Pixel avatar -->
+    <div class="avatar-wrap">
+      <canvas id="moritz-canvas" width="280" height="160"></canvas>
+    </div>
+
     <div id="messages"></div>
     <div class="input-bar">
       <input id="chat-input" type="text" placeholder="Say something…" maxlength="400" autocomplete="off" spellcheck="false">
@@ -478,6 +518,7 @@
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
 const BRAIN = '/.netlify/functions';
+const _sessionStart = Date.now();
 
 // ── Live Pulse ────────────────────────────────────────────────────────────────
 async function fetchPulse() {
@@ -495,6 +536,137 @@ async function fetchPulse() {
 fetchPulse();
 setInterval(fetchPulse, 10000);
 
+// ── Moritz Avatar ─────────────────────────────────────────────────────────────
+class MoritzAvatar {
+  constructor(canvas) {
+    this.cv = canvas;
+    this.cx = canvas.getContext('2d');
+    this.W = canvas.width;
+    this.H = canvas.height;
+    this.talking = false;
+    this.t = 0;
+    this.ps = [];
+    this._dead = false;
+    this._build();
+    this._frame();
+  }
+
+  _build() {
+    const cx = this.W / 2, cy = this.H / 2 + 6;
+    const add = (x, y, type) => this.ps.push({
+      x: cx + (Math.random() - 0.5) * 60,
+      y: cy + (Math.random() - 0.5) * 60,
+      tx: x, ty: y, type,
+      vx: 0, vy: 0,
+      ph: Math.random() * Math.PI * 2,
+      sp: 0.3 + Math.random() * 0.7
+    });
+
+    // Head oval outline
+    for (let a = 0; a < Math.PI * 2; a += 0.095) {
+      add(cx + Math.cos(a) * 62, cy + Math.sin(a) * 72, 'head');
+    }
+    // Left eye ring
+    for (let a = 0; a < Math.PI * 2; a += 0.42) {
+      add(cx - 24 + Math.cos(a) * 11, cy - 20 + Math.sin(a) * 8, 'eye');
+    }
+    // Right eye ring
+    for (let a = 0; a < Math.PI * 2; a += 0.42) {
+      add(cx + 24 + Math.cos(a) * 11, cy - 20 + Math.sin(a) * 8, 'eye');
+    }
+    // Pupils (bright centers)
+    add(cx - 24, cy - 20, 'pupil');
+    add(cx - 23, cy - 21, 'pupil');
+    add(cx + 24, cy - 20, 'pupil');
+    add(cx + 25, cy - 21, 'pupil');
+    // Mouth arc (slight neutral curve)
+    for (let a = Math.PI * 0.18; a < Math.PI * 0.82; a += 0.14) {
+      add(cx + Math.cos(a + Math.PI) * 28, cy + 34 + Math.sin(a + Math.PI) * -10, 'mouth');
+    }
+    // Ambient digital noise
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 28 + Math.random() * 38;
+      add(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 1.1, 'noise');
+    }
+  }
+
+  _frame() {
+    if (this._dead) return;
+    this.t += 0.016;
+    const t = this.t;
+    const ctx = this.cx;
+    ctx.clearRect(0, 0, this.W, this.H);
+
+    for (const p of this.ps) {
+      // Organic drift
+      let tx = p.tx + Math.sin(t * p.sp + p.ph) * 1.6;
+      let ty = p.ty + Math.cos(t * p.sp * 0.78 + p.ph + 1.4) * 1.6;
+
+      if (this.talking) {
+        if (p.type === 'mouth') {
+          ty += Math.sin(t * 13 + p.ph * 2.8) * 4.5;
+          tx += Math.cos(t * 8.5 + p.ph) * 1.4;
+        }
+        if (p.type === 'pupil') {
+          // subtle flicker on pupils while talking
+          if (Math.sin(t * 22 + p.ph) > 0.85) { tx += (Math.random() - 0.5) * 2; }
+        }
+        p.vx += (Math.random() - 0.5) * 0.22;
+        p.vy += (Math.random() - 0.5) * 0.22;
+      }
+
+      // Spring toward target
+      p.vx += (tx - p.x) * 0.052;
+      p.vy += (ty - p.y) * 0.052;
+      p.vx *= 0.84;
+      p.vy *= 0.84;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Per-type color and alpha
+      let alpha, r, g, b;
+      switch (p.type) {
+        case 'pupil':
+          alpha = this.talking
+            ? 0.82 + Math.sin(t * 18 + p.ph) * 0.18
+            : 0.55 + Math.sin(t * 1.6 + p.ph) * 0.12;
+          r = 160; g = 230; b = 255; break;
+        case 'eye':
+          alpha = 0.32 + Math.sin(t * 1.4 + p.ph) * 0.08;
+          r = 80; g = 185; b = 255; break;
+        case 'mouth':
+          alpha = this.talking
+            ? 0.52 + Math.abs(Math.sin(t * 11 + p.ph)) * 0.22
+            : 0.26 + Math.sin(t * 1.1 + p.ph) * 0.07;
+          r = 90; g = 190; b = 255; break;
+        case 'noise':
+          alpha = (this.talking ? 0.16 : 0.06) + Math.abs(Math.sin(t * 4.2 + p.ph)) * 0.05;
+          r = 55; g = 145; b = 255; break;
+        default: // head
+          alpha = (this.talking ? 0.44 : 0.24) + Math.sin(t * 1.2 + p.ph) * 0.07;
+          r = 88; g = 182; b = 255;
+      }
+
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y) - 1, 2, 2);
+    }
+
+    requestAnimationFrame(() => this._frame());
+  }
+
+  setTalking(v) { this.talking = v; }
+  destroy()     { this._dead = true; }
+}
+
+let _avatar = null;
+
+function initAvatar() {
+  if (_avatar) return;
+  const cv = document.getElementById('moritz-canvas');
+  if (cv) _avatar = new MoritzAvatar(cv);
+}
+
 // ── TTS ───────────────────────────────────────────────────────────────────────
 let voices = [];
 window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); };
@@ -511,6 +683,9 @@ function speak(text) {
                  || voices.find(v => /en[-_]US/i.test(v.lang))
                  || voices[0];
   if (preferred) utt.voice = preferred;
+  utt.onstart = () => { if (_avatar) _avatar.setTalking(true); };
+  utt.onend   = () => { if (_avatar) _avatar.setTalking(false); };
+  utt.onerror = () => { if (_avatar) _avatar.setTalking(false); };
   window.speechSynthesis.speak(utt);
 }
 
@@ -528,11 +703,13 @@ function openChat() {
   document.getElementById('chat-drawer').classList.add('open');
   document.getElementById('backdrop').classList.add('show');
   document.getElementById('chat-input').focus();
+  initAvatar();
   if (messages.length === 0) startConversation();
 }
 
 function closeChat() {
   window.speechSynthesis.cancel();
+  if (_avatar) _avatar.setTalking(false);
   document.getElementById('chat-drawer').classList.remove('open');
   document.getElementById('backdrop').classList.remove('show');
 }
@@ -634,12 +811,49 @@ async function sendMsg() {
   document.getElementById('chat-input').focus();
 }
 
+// ── Physical field collection ─────────────────────────────────────────────────
+function collectPhysical() {
+  let referrer = 'direct';
+  try { if (document.referrer) referrer = new URL(document.referrer).hostname; } catch {}
+  return {
+    device_type:    /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    referrer,
+    session_duration_s: Math.round((Date.now() - _sessionStart) / 1000),
+    message_count:  messages.filter(m => m.role === 'user').length,
+    language:       navigator.language || 'unknown',
+    viewport:       window.innerWidth + 'x' + window.innerHeight,
+    timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+  };
+}
+
+// ── Inference call (fire-and-forget, runs while TTS plays goodbye) ─────────────
+async function analyzeConversation() {
+  try {
+    const res = await fetch(BRAIN + '/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+      signal: AbortSignal.timeout(12000),
+    });
+    const d = await res.json();
+    return d.profile || null;
+  } catch { return null; }
+}
+
+// ── Log conversation with full profile ────────────────────────────────────────
 async function logConversation() {
+  const physical = collectPhysical();
+  // Run inference in parallel — TTS goodbye buys us 3–5s, plenty of time
+  const [inferResult] = await Promise.allSettled([analyzeConversation()]);
+  const inferred = inferResult.status === 'fulfilled' ? inferResult.value : null;
   try {
     await fetch(BRAIN + '/chat-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: userName, email: userEmail, intents, messages, geo: geoData }),
+      body: JSON.stringify({
+        name: userName, email: userEmail, intents, messages, geo: geoData,
+        physical, inferred
+      }),
     });
   } catch { /* best-effort */ }
 }
