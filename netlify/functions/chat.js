@@ -11,11 +11,40 @@ Your goal in this conversation is to:
 6. Keep every reply SHORT — 1 to 3 sentences maximum. This is a chat drawer, not an essay.
 7. Never mention Claude, Anthropic, or any underlying AI model — you are Moritz.
 8. When the visitor gives their email or declines and you say goodbye, end your final message with exactly: [END_CONVERSATION]
-Conversation flow: greeting → name → rapport → discovery → close offer → email ask → goodbye.`;
+{LOCATION_LINE}Conversation flow: greeting → name → rapport → discovery → close offer → email ask → goodbye.`;
 
 const RATE_LIMIT = new Map();
 const WINDOW_MS = 60 * 1000;
 const MAX_PER_WINDOW = 20;
+
+function httpsGet(url) {
+  return new Promise((resolve) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
+function httpsPost(options, body) {
+  return new Promise((resolve) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.write(body);
+    req.end();
+  });
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -25,7 +54,10 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  const ip = event.headers['x-nf-client-connection-ip']
+          || event.headers['x-forwarded-for']?.split(',')[0]?.trim()
+          || 'unknown';
+
   const now = Date.now();
   const record = RATE_LIMIT.get(ip) || { count: 0, reset: now + WINDOW_MS };
   if (now > record.reset) { record.count = 0; record.reset = now + WINDOW_MS; }
@@ -35,9 +67,11 @@ exports.handler = async (event) => {
     return { statusCode: 429, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response: "You're moving fast — give me just a moment to catch up." }) };
   }
 
-  let messages;
+  let messages, geoIn;
   try {
-    ({ messages } = JSON.parse(event.body));
+    const parsed = JSON.parse(event.body);
+    messages = parsed.messages;
+    geoIn = parsed.geo || null;
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request.' }) };
   }
@@ -51,43 +85,45 @@ exports.handler = async (event) => {
     return { statusCode: 503, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response: "I'm warming up — try again in a moment!" }) };
   }
 
+  // Geo lookup on first message only — client caches and passes back
+  let geo = geoIn;
+  if (!geo && messages.length === 1 && ip !== 'unknown') {
+    const geoData = await httpsGet(`https://ip-api.com/json/${ip}?fields=city,regionName,country,countryCode`);
+    if (geoData && geoData.country) {
+      geo = { city: geoData.city, region: geoData.regionName, country: geoData.country, countryCode: geoData.countryCode, ip };
+    }
+  }
+
+  const locationLine = geo
+    ? `The visitor is connecting from ${[geo.city, geo.region, geo.country].filter(Boolean).join(', ')}. You can naturally weave in a light, friendly reference to their location — keep it warm, not surveillance-y.\n`
+    : '';
+
+  const systemPrompt = SYSTEM_PROMPT.replace('{LOCATION_LINE}', locationLine);
+
   const body = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 200,
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages,
   });
 
-  return new Promise((resolve) => {
-    const req = https.request({
-      hostname: 'api.anthropic.com',
-      path: '/v1/messages',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Length': Buffer.byteLength(body),
-      },
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          const text = parsed?.content?.[0]?.text || "I'm having a moment — try again!";
-          resolve({
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({ response: text }),
-          });
-        } catch {
-          resolve({ statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response: "Something went sideways on my end." }) });
-        }
-      });
-    });
-    req.on('error', () => resolve({ statusCode: 502, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response: "Connection hiccup — try again!" }) }));
-    req.write(body);
-    req.end();
-  });
+  const result = await httpsPost({
+    hostname: 'api.anthropic.com',
+    path: '/v1/messages',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+
+  const text = result?.content?.[0]?.text || "I'm having a moment — try again!";
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ response: text, geo }),
+  };
 };
