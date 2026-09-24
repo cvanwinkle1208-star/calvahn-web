@@ -61,8 +61,15 @@
 
   /* ── Face panel — ghost on landing, full apparition in chat ── */
   @keyframes ghost-breathe {
-    0%, 100% { opacity: 0.09; }
-    50%       { opacity: 0.14; }
+    0%, 100% { opacity: 0.13; }
+    50%       { opacity: 0.21; }
+  }
+
+  @keyframes ghost-float {
+    0%   { transform: translate(-50%, -50%); }
+    35%  { transform: translate(-50%, calc(-50% - 11px)); }
+    65%  { transform: translate(-50%, calc(-50% + 7px)); }
+    100% { transform: translate(-50%, -50%); }
   }
 
   .face-panel {
@@ -73,10 +80,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    opacity: 0.09;
+    opacity: 0.13;
     pointer-events: none;
     z-index: 0;
-    animation: ghost-breathe 5s ease-in-out infinite;
+    animation: ghost-breathe 5s ease-in-out infinite, ghost-float 9s ease-in-out infinite;
   }
 
   /* Hide landing ghost on mobile — too small to look good */
@@ -343,12 +350,20 @@
     margin-bottom: 28px;
   }
 
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    15%       { transform: scale(1.45); box-shadow: 0 0 0 5px rgba(34,197,94,0.3); }
+    30%       { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    45%       { transform: scale(1.25); box-shadow: 0 0 0 3px rgba(34,197,94,0.15); }
+    65%       { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+
   .status-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--green);
     flex-shrink: 0;
-    animation: dot-pulse 2.5s ease-in-out infinite;
+    animation: heartbeat 3s ease-in-out infinite;
   }
 
   /* ── Hero ──────────────────────────────────────────────────── */
@@ -362,6 +377,7 @@
     line-height: 1;
     color: var(--text);
     margin-bottom: 12px;
+    text-shadow: 0 0 60px rgba(59,130,246,0.20), 0 0 120px rgba(59,130,246,0.08);
   }
 
   .tagline {
@@ -374,6 +390,74 @@
 
   .tagline strong { color: var(--text); font-weight: 600; }
 
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 9px;
+    margin-bottom: 18px;
+  }
+  .hero-badge-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: dot-pulse 2.5s ease-in-out infinite;
+  }
+
+  .tagline-main {
+    font-size: clamp(20px, 3.2vw, 28px);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .not-for-sale {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid rgba(139,92,246,0.32);
+    border-radius: 100px;
+    padding: 5px 12px;
+    opacity: 0.82;
+  }
+
+  .about-highlight {
+    border-left: 2px solid rgba(59,130,246,0.38);
+    padding-left: 14px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: var(--dim);
+    line-height: 1.65;
+  }
+  .about-highlight strong { color: var(--text); font-weight: 600; }
+
+  .founder-line {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
   /* ── CTA ───────────────────────────────────────────────────── */
   .cta-wrap { margin: 20px 0 24px; }
 
@@ -381,26 +465,29 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: var(--blue);
-    border: none;
+    background: rgba(59,130,246,0.07);
+    border: 1px solid rgba(59,130,246,0.48);
     border-radius: 10px;
     padding: 13px 26px;
-    color: #fff;
-    font-family: var(--font-sans);
-    font-size: 15px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+    letter-spacing: 0.2px;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s, transform 0.12s;
+    box-shadow: 0 0 20px rgba(59,130,246,0.07);
   }
 
   #meet-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59,130,246,0.25);
+    background: rgba(59,130,246,0.13);
+    border-color: rgba(59,130,246,0.88);
+    box-shadow: 0 0 30px rgba(59,130,246,0.25), inset 0 0 18px rgba(59,130,246,0.07);
+    transform: translateY(-1px);
   }
 
   #meet-btn:active { transform: translateY(0); }
-  #meet-btn .arrow { font-size: 17px; transition: transform 0.18s; }
+  #meet-btn .arrow { font-size: 15px; transition: transform 0.18s; }
   #meet-btn:hover .arrow { transform: translateX(4px); }
 
   .cta-hint {
@@ -523,14 +610,19 @@
     </div>
 
     <div class="hero">
+      <div class="hero-badge"><span class="hero-badge-dot"></span>Private platform · early access</div>
       <div class="wordmark">Moritz</div>
-      <div class="tagline">Your technology, <strong>always on.</strong><br>Moritz watches everything so you don't have to.</div>
+      <div class="tagline-main">Nothing fails unnoticed.</div>
+      <div class="tagline">He watches every system, reasons about what matters, and acts — without waking anyone up.</div>
     </div>
 
     <div class="cta-wrap">
-      <button id="meet-btn" onclick="openChat()">
-        Meet Moritz <span class="arrow">→</span>
-      </button>
+      <div class="cta-row">
+        <button id="meet-btn" onclick="openChat()">
+          Meet Moritz <span class="arrow">→</span>
+        </button>
+        <span class="not-for-sale">Not for sale — yet</span>
+      </div>
       <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
     </div>
 
@@ -551,8 +643,11 @@
 
     <hr class="divider">
 
-    <p class="about">
+    <div class="about-highlight">
       Most technology fails because no one is watching. <strong>Moritz watches.</strong>
+    </div>
+
+    <p class="about">
       He runs on a private distributed platform, monitors every system, reasons about what matters,
       and acts — without waking anyone up unless he has to.
       He learns from every outcome and gets better at the job over time.
@@ -560,11 +655,7 @@
       <strong>That's the point.</strong>
     </p>
 
-    <footer>
-      <span>Built by one person, for everything that shouldn't fail</span>
-      <span class="footer-sep">·</span>
-      <span>Private. Distributed. Not for sale — yet.</span>
-    </footer>
+    <div class="founder-line">Built by one person, for everything that shouldn't fail.</div>
   </div>
 
   <!-- Right: face + chat -->
@@ -600,14 +691,34 @@ const BRAIN = '/.netlify/functions';
 const _sessionStart = Date.now();
 
 // ── Live Pulse ─────────────────────────────────────────────────
+let _pulseLoaded = false;
+
+function _countUp(el, target, suffix, duration) {
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+    el.textContent = Math.round(target * ease) + suffix;
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 async function fetchPulse() {
   try {
     const r = await fetch(BRAIN + '/public-status', { signal: AbortSignal.timeout(6000) });
     if (!r.ok) return;
     const d = await r.json();
-    document.getElementById('p-nodes').textContent = d.nodes_online + '/' + d.nodes_total;
-    document.getElementById('p-svc').textContent   = d.services ?? '—';
-    document.getElementById('p-vram').textContent  = d.vram_gb ? d.vram_gb + ' GB' : '—';
+    if (!_pulseLoaded) {
+      _pulseLoaded = true;
+      _countUp(document.getElementById('p-svc'),  d.services  ?? 0, '', 1100);
+      _countUp(document.getElementById('p-vram'), d.vram_gb   ?? 0, ' GB', 1400);
+      document.getElementById('p-nodes').textContent = d.nodes_online + '/' + d.nodes_total;
+    } else {
+      document.getElementById('p-nodes').textContent = d.nodes_online + '/' + d.nodes_total;
+      document.getElementById('p-svc').textContent   = d.services ?? '—';
+      document.getElementById('p-vram').textContent  = d.vram_gb ? d.vram_gb + ' GB' : '—';
+    }
     document.getElementById('pulse-bar').classList.add('live');
     document.getElementById('status-text').textContent = 'Online · ' + d.nodes_online + ' systems active';
   } catch { /* silent */ }
@@ -631,6 +742,8 @@ class MoritzFace {
     this.thinking  = false;
     this.thinkDim  = 1.0;
     this._dead     = false;
+    this._mx       = 0;
+    this._my       = 0;
 
     // Atmospheric particles — slow upward drift
     this._particles = Array.from({length: 24}, () => ({
@@ -703,9 +816,10 @@ class MoritzFace {
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
-    const drift = Math.sin(this.t * 0.33) * 1.8;
+    const driftY = Math.sin(this.t * 0.28) * 7;
+    const driftX = Math.cos(this.t * 0.21) * 3;
     ctx.save();
-    ctx.translate(this.cx, this.cy + drift);
+    ctx.translate(this.cx + driftX, this.cy + driftY);
 
     const pulse = 0.88 + Math.sin(this.t * 0.40) * 0.08;
     const ba = this.blinking
@@ -731,13 +845,18 @@ class MoritzFace {
     bl(-52, -58,  28,   7, 120, 198, 255, ap(0.065));
     bl( 52, -58,  28,   7, 120, 198, 255, ap(0.065));
 
-    // ── Eyes — hollow dark voids ──────────────────────────────
+    // ── Eyes — hollow dark voids with cursor tracking ────────
     if (fd > 0.02) {
-      bl(-52, -36, 31, 16, 2,  5, 15, ap(0.58 * fd));
-      bl( 52, -36, 31, 16, 2,  5, 15, ap(0.58 * fd));
-      // Very faint haze inside — just barely there
-      bl(-52, -36, 20, 12, 28, 75, 190, ap(0.048 * fd));
-      bl( 52, -36, 20, 12, 28, 75, 190, ap(0.048 * fd));
+      const rect = this.cv.getBoundingClientRect();
+      const fcx  = rect.left + rect.width  * 0.5;
+      const fcy  = rect.top  + rect.height * 0.38;
+      const maxEx = 4, maxEy = 2.5;
+      const ex = Math.max(-maxEx, Math.min(maxEx, ((this._mx - fcx) / (window.innerWidth  * 0.38)) * maxEx));
+      const ey = Math.max(-maxEy, Math.min(maxEy, ((this._my - fcy) / (window.innerHeight * 0.30)) * maxEy));
+      bl(-52 + ex, -36 + ey, 31, 16, 2,  5, 15, ap(0.58 * fd));
+      bl( 52 + ex, -36 + ey, 31, 16, 2,  5, 15, ap(0.58 * fd));
+      bl(-52 + ex, -36 + ey, 20, 12, 28, 75, 190, ap(0.048 * fd));
+      bl( 52 + ex, -36 + ey, 20, 12, 28, 75, 190, ap(0.048 * fd));
     }
 
     // ── Mouth — resting slit + fog parting when speaking ─────
@@ -779,6 +898,7 @@ let _face = null;
   const cv = document.getElementById('moritz-canvas');
   if (cv) _face = new MoritzFace(cv);
 })();
+document.addEventListener('mousemove', e => { if (_face) { _face._mx = e.clientX; _face._my = e.clientY; } });
 
 // ── TTS ────────────────────────────────────────────────────────
 let voices = [];
