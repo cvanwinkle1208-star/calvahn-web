@@ -16,7 +16,7 @@ function httpsGet(options) {
   });
 }
 
-const FALLBACK = { nodes_online: 4, nodes_total: 7, services: 12, vram_gb: 54, hb_age_s: null };
+const FALLBACK = { nodes_online: 4, nodes_total: 7, services: 12, vram_gb: 132, hb_age_s: null };
 
 exports.handler = async () => {
   const clientId     = process.env.CF_ACCESS_CLIENT_ID;
