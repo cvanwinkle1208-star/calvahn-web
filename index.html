@@ -39,76 +39,58 @@
     padding: 32px 24px;
   }
 
-  /* ── Page layout ──────────────────────────────── */
-  .page-wrap {
+  /* ── Page wrap — NO transition, JS drives the cross-fade ─── */
+  #page {
     width: 100%;
     max-width: 1020px;
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 64px;
-    transition: max-width 0.55s cubic-bezier(0.4, 0, 0.2, 1),
-                gap       0.55s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* ── Content panel ────────────────────────────── */
+  /* ── Content panel ─────────────────────────────────────────── */
   .content-panel {
     flex: 1 1 auto;
     min-width: 0;
     max-width: 540px;
-    opacity: 1;
-    overflow: hidden;
-    transition: opacity 0.3s ease,
-                max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                flex      0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* ── Face panel ───────────────────────────────── */
+  /* ── Face panel ────────────────────────────────────────────── */
   .face-panel {
     flex: 0 0 380px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    transition: flex 0.55s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* ── CHAT MODE ────────────────────────────────── */
-  .page-wrap.chat-mode {
+  /* ── CHAT MODE (no transitions — switched while page is faded) */
+  #page.chat-mode {
     max-width: 520px;
     gap: 0;
     justify-content: center;
   }
 
-  .page-wrap.chat-mode .content-panel {
-    flex: 0 0 0;
-    max-width: 0;
-    opacity: 0;
-    pointer-events: none;
+  #page.chat-mode .content-panel {
+    display: none;
   }
 
-  .page-wrap.chat-mode .face-panel {
+  #page.chat-mode .face-panel {
     flex: 0 0 100%;
-    max-width: 520px;
     width: 100%;
+    max-width: 520px;
   }
 
-  /* ── Face header (chat mode only) ─────────────── */
+  /* ── Face header (chat mode only) ─────────────────────────── */
   .face-header {
+    display: none;
     width: 100%;
-    display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 2px 10px;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s 0.2s, max-height 0.3s;
   }
 
-  .page-wrap.chat-mode .face-header {
-    opacity: 1;
-    max-height: 48px;
-  }
+  #page.chat-mode .face-header { display: flex; }
 
   .face-title {
     display: flex;
@@ -118,7 +100,6 @@
     font-weight: 600;
     color: var(--text);
     font-family: var(--font-mono);
-    letter-spacing: 0.3px;
   }
 
   .face-dot {
@@ -137,7 +118,6 @@
     font-size: 11px;
     color: var(--muted);
     font-weight: 400;
-    letter-spacing: 0;
   }
 
   .face-close {
@@ -158,7 +138,7 @@
     border-color: rgba(239,68,68,0.3);
   }
 
-  /* ── Canvas ───────────────────────────────────── */
+  /* ── Canvas ────────────────────────────────────────────────── */
   .canvas-wrap {
     width: 100%;
     display: flex;
@@ -173,21 +153,23 @@
     cursor: pointer;
   }
 
-  /* ── Chat section (appears in chat mode) ──────── */
-  .chat-section {
-    width: 100%;
-    max-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid transparent;
-    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.3s 0.2s;
+  /* Shrink canvas in chat mode so face + chat fits without scroll */
+  #page.chat-mode #moritz-canvas {
+    max-height: 42vh;
+    width: auto;
+    max-width: 90%;
   }
 
-  .page-wrap.chat-mode .chat-section {
-    max-height: 420px;
-    border-top-color: var(--border);
+  /* ── Chat section ──────────────────────────────────────────── */
+  .chat-section {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+
+  #page.chat-mode .chat-section {
+    display: flex;
   }
 
   #messages {
@@ -197,7 +179,7 @@
     flex-direction: column;
     gap: 11px;
     min-height: 60px;
-    max-height: 300px;
+    max-height: min(34vh, 300px);
     scroll-behavior: smooth;
   }
 
@@ -208,7 +190,7 @@
     display: flex;
     flex-direction: column;
     max-width: 82%;
-    animation: msgIn 0.18s ease;
+    animation: msgIn 0.2s ease;
   }
 
   @keyframes msgIn {
@@ -294,7 +276,7 @@
   #chat-send:hover    { background: #2563eb; }
   #chat-send:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  /* ── Status bar ───────────────────────────────── */
+  /* ── Status bar ────────────────────────────────────────────── */
   .status-bar {
     display: flex;
     align-items: center;
@@ -315,7 +297,7 @@
     animation: dot-pulse 2.5s ease-in-out infinite;
   }
 
-  /* ── Hero ─────────────────────────────────────── */
+  /* ── Hero ──────────────────────────────────────────────────── */
   .hero { margin-bottom: 20px; }
 
   .wordmark {
@@ -338,7 +320,7 @@
 
   .tagline strong { color: var(--text); font-weight: 600; }
 
-  /* ── CTA ──────────────────────────────────────── */
+  /* ── CTA ───────────────────────────────────────────────────── */
   .cta-wrap { margin: 20px 0 24px; }
 
   #meet-btn {
@@ -364,7 +346,6 @@
   }
 
   #meet-btn:active { transform: translateY(0); }
-
   #meet-btn .arrow { font-size: 17px; transition: transform 0.18s; }
   #meet-btn:hover .arrow { transform: translateX(4px); }
 
@@ -374,7 +355,7 @@
     color: var(--muted);
   }
 
-  /* ── Pulse bar ────────────────────────────────── */
+  /* ── Pulse bar ─────────────────────────────────────────────── */
   .pulse-bar {
     display: flex;
     background: var(--surface);
@@ -413,16 +394,11 @@
   .pulse-lbl {
     font-size: 10px;
     color: var(--muted);
-    letter-spacing: 0.2px;
     text-align: center;
   }
 
-  /* ── About / footer ───────────────────────────── */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 0 0 20px;
-  }
+  /* ── About / footer ────────────────────────────────────────── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0 0 20px; }
 
   .about {
     color: var(--muted);
@@ -445,29 +421,11 @@
 
   .footer-sep { opacity: 0.3; }
 
-  /* ── Chat mode body alignment ────────────────── */
-  body:has(.page-wrap.chat-mode) {
-    align-items: flex-start;
-    padding-top: 20px;
-  }
-
-  /* Canvas shrinks in chat mode so face + chat fit without scrolling */
-  .page-wrap.chat-mode #moritz-canvas {
-    max-height: 40vh;
-    width: auto;
-    max-width: 90%;
-  }
-
-  /* Cap chat section so total layout fits viewport */
-  .page-wrap.chat-mode .chat-section {
-    max-height: min(36vh, 340px);
-  }
-
-  /* ── Mobile ───────────────────────────────────── */
+  /* ── Mobile ────────────────────────────────────────────────── */
   @media (max-width: 767px) {
     body { padding: 20px 16px; align-items: flex-start; }
 
-    .page-wrap {
+    #page {
       flex-direction: column-reverse;
       gap: 24px;
       max-width: 480px;
@@ -475,49 +433,35 @@
       align-items: center;
     }
 
-    .content-panel {
-      flex: 0 0 auto;
-      max-width: 100%;
-      width: 100%;
-      max-height: 1200px;
-      transition: opacity 0.3s ease, max-height 0.5s ease;
-    }
-
-    .face-panel {
-      flex: 0 0 auto;
-      width: 100%;
-    }
-
+    .content-panel { flex: 0 0 auto; max-width: 100%; width: 100%; }
+    .face-panel    { flex: 0 0 auto; width: 100%; }
     #moritz-canvas { max-width: 280px; }
 
-    .page-wrap.chat-mode {
-      gap: 0;
+    #page.chat-mode {
       max-width: 100%;
+      gap: 0;
     }
 
-    .page-wrap.chat-mode .content-panel {
-      max-height: 0;
-      opacity: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .page-wrap.chat-mode .face-panel {
+    #page.chat-mode .face-panel {
       flex: 0 0 auto;
       width: 100%;
       max-width: 100%;
     }
 
-    .page-wrap.chat-mode #moritz-canvas { max-width: 100%; }
+    #page.chat-mode #moritz-canvas {
+      max-height: 38vh;
+      width: auto;
+      max-width: 100%;
+    }
   }
 </style>
 </head>
 <body>
 
-<div class="page-wrap" id="page">
+<div id="page">
 
   <!-- Left: landing content -->
-  <div class="content-panel" id="content-panel">
+  <div class="content-panel">
     <div class="status-bar">
       <span class="status-dot"></span>
       <span id="status-text">Online</span>
@@ -569,9 +513,9 @@
   </div>
 
   <!-- Right: face + chat -->
-  <div class="face-panel" id="face-panel">
+  <div class="face-panel">
 
-    <div class="face-header" id="face-header">
+    <div class="face-header">
       <div class="face-title">
         <span class="face-dot"></span>
         Moritz
@@ -584,7 +528,7 @@
       <canvas id="moritz-canvas" width="400" height="480" onclick="openChat()" title="Click to meet Moritz"></canvas>
     </div>
 
-    <div class="chat-section" id="chat-section">
+    <div class="chat-section">
       <div id="messages"></div>
       <div class="input-bar">
         <input id="chat-input" type="text" placeholder="Say something…" maxlength="400" autocomplete="off" spellcheck="false">
@@ -596,11 +540,11 @@
 </div>
 
 <script>
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────
 const BRAIN = '/.netlify/functions';
 const _sessionStart = Date.now();
 
-// ── Live Pulse ────────────────────────────────────────────────────────────────
+// ── Live Pulse ─────────────────────────────────────────────────
 async function fetchPulse() {
   try {
     const r = await fetch(BRAIN + '/public-status', { signal: AbortSignal.timeout(6000) });
@@ -616,35 +560,30 @@ async function fetchPulse() {
 fetchPulse();
 setInterval(fetchPulse, 10000);
 
-// ── Moritz Face ───────────────────────────────────────────────────────────────
+// ── Moritz Face — speaking mask ────────────────────────────────
 class MoritzFace {
   constructor(canvas) {
     this.cv  = canvas;
     this.ctx = canvas.getContext('2d');
-    // Logical canvas size — CSS scales it
-    this.W   = 400;
-    this.H   = 480;
-    // Face center in logical coords
-    this.cx  = 200;
-    this.cy  = 205;
+    this.W = 400;
+    this.H = 480;
+    this.cx = 200;
+    this.cy = 200;
 
-    this.talking    = false;
-    this.t          = 0;
-    this.mouthOpen  = 0;
+    this.talking   = false;
+    this.t         = 0;
+    this.mouthOpen = 0;
 
-    // Blink state
-    this.blinkT     = 0;
-    this.nextBlink  = 2.5 + Math.random() * 3.5;
-    this.blinking   = false;
-    this.blinkProg  = 0;
+    // Blink
+    this.blinkT    = 0;
+    this.nextBlink = 2 + Math.random() * 4;
+    this.blinking  = false;
+    this.blinkProg = 0;
 
-    // Eye look-around
-    this.lookX      = 0;
-    this.lookY      = 0;
-    this.targetLX   = 0;
-    this.targetLY   = 0;
-    this.lookT      = 0;
-    this.nextLook   = 2 + Math.random() * 4;
+    // Look-around
+    this.lookX   = 0; this.lookY   = 0;
+    this.targetX = 0; this.targetY = 0;
+    this.lookT   = 0; this.nextLook = 3 + Math.random() * 4;
 
     this._dead = false;
     this._tick();
@@ -665,364 +604,426 @@ class MoritzFace {
       this.nextBlink = 2.5 + Math.random() * 4;
     }
     if (this.blinking) {
-      this.blinkProg += dt * 9;
+      this.blinkProg += dt * 8;
       if (this.blinkProg >= 2) { this.blinking = false; this.blinkProg = 0; }
     }
 
-    // Look around
+    // Look-around
     if (this.lookT >= this.nextLook) {
-      this.targetLX  = (Math.random() - 0.5) * 1.6;
-      this.targetLY  = (Math.random() - 0.5) * 0.9;
-      this.nextLook  = 2 + Math.random() * 5;
-      this.lookT     = 0;
+      this.targetX = (Math.random() - 0.5) * 1.6;
+      this.targetY = (Math.random() - 0.5) * 0.8;
+      this.nextLook = 2.5 + Math.random() * 5;
+      this.lookT    = 0;
     }
-    this.lookX += (this.targetLX - this.lookX) * 0.04;
-    this.lookY += (this.targetLY - this.lookY) * 0.04;
+    this.lookX += (this.targetX - this.lookX) * 0.04;
+    this.lookY += (this.targetY - this.lookY) * 0.04;
 
-    // Mouth
+    // Mouth — naturally irregular when talking
     if (this.talking) {
-      const target = 0.35 + Math.abs(Math.sin(this.t * 14)) * 0.45 + Math.random() * 0.2;
-      this.mouthOpen += (Math.min(1, target) - this.mouthOpen) * 0.28;
+      const target = 0.3 + Math.abs(Math.sin(this.t * 11)) * 0.4 + Math.abs(Math.sin(this.t * 7.3)) * 0.3;
+      this.mouthOpen += (Math.min(1, target) - this.mouthOpen) * 0.25;
     } else {
-      this.mouthOpen *= 0.86;
+      this.mouthOpen *= 0.82;
     }
 
     this._draw();
     requestAnimationFrame(() => this._tick());
   }
 
+  // ── Almond-shaped eye path ──────────────────────────────────
+  _eyePath(ctx, ex, ey, ew, eh) {
+    ctx.beginPath();
+    ctx.moveTo(ex - ew, ey + 1);
+    // Upper lid: arches high toward inner third then curves to outer corner
+    ctx.bezierCurveTo(ex - ew * 0.2, ey - eh * 1.25, ex + ew * 0.35, ey - eh * 1.15, ex + ew, ey - 1);
+    // Lower lid: gentler arc back
+    ctx.bezierCurveTo(ex + ew * 0.4, ey + eh * 0.72, ex - ew * 0.25, ey + eh * 0.72, ex - ew, ey + 1);
+    ctx.closePath();
+  }
+
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
 
-    // Idle float
-    const fy = Math.sin(this.t * 0.65) * 4.5;
-    const fx = Math.sin(this.t * 0.38) * 1.8;
+    // Gentle idle float
+    const fy = Math.sin(this.t * 0.6) * 4;
+    const fx = Math.sin(this.t * 0.37) * 1.5;
 
     ctx.save();
     ctx.translate(this.cx + fx, this.cy + fy);
 
-    this._shoulders(ctx);
-    this._neck(ctx);
-    this._headFill(ctx);
-    this._circuits(ctx);
-    this._eyebrows(ctx);
-    this._eyes(ctx);
-    this._nose(ctx);
-    this._mouth(ctx);
-    this._headEdge(ctx);
+    this._drawNeckShoulder(ctx);
+    this._drawHead(ctx);
+    this._drawFacialPlanes(ctx);
+    this._drawEyebrows(ctx);
+    this._drawEyes(ctx);
+    this._drawNose(ctx);
+    this._drawMouth(ctx);
 
     ctx.restore();
   }
 
-  _shoulders(ctx) {
-    // Shoulder silhouette below neck
-    const sg = ctx.createRadialGradient(0, 200, 0, 0, 200, 200);
-    sg.addColorStop(0, '#101e2e');
-    sg.addColorStop(0.55, '#0b1520');
+  _drawNeckShoulder(ctx) {
+    const ng = ctx.createLinearGradient(0, 148, 0, 240);
+    ng.addColorStop(0, '#14202e');
+    ng.addColorStop(1, 'rgba(10,14,20,0)');
+    ctx.beginPath();
+    ctx.moveTo(-36, 148);
+    ctx.lineTo(36, 148);
+    ctx.lineTo(70, 230);
+    ctx.lineTo(-70, 230);
+    ctx.closePath();
+    ctx.fillStyle = ng;
+    ctx.fill();
+
+    // Shoulders
+    const sg = ctx.createRadialGradient(0, 230, 0, 0, 230, 200);
+    sg.addColorStop(0, 'rgba(18,28,42,0.9)');
+    sg.addColorStop(0.5, 'rgba(12,18,28,0.5)');
     sg.addColorStop(1, 'rgba(8,11,16,0)');
     ctx.beginPath();
-    ctx.ellipse(0, 218, 185, 65, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 230, 200, 60, 0, 0, Math.PI * 2);
     ctx.fillStyle = sg;
     ctx.fill();
   }
 
-  _neck(ctx) {
-    const nw = 34;
-    const ny0 = 148;
-    const ny1 = 210;
-    const ng = ctx.createLinearGradient(-nw, ny0, nw, ny1);
-    ng.addColorStop(0, '#131f30');
-    ng.addColorStop(1, '#0b1420');
-    ctx.beginPath();
-    ctx.moveTo(-nw, ny0);
-    ctx.lineTo(nw, ny0);
-    ctx.lineTo(nw * 1.7, ny1);
-    ctx.lineTo(-nw * 1.7, ny1);
-    ctx.closePath();
-    ctx.fillStyle = ng;
-    ctx.fill();
-  }
+  _drawHead(ctx) {
+    const hw = 116, hh = 148;
 
-  _headFill(ctx) {
-    const hw = 118, hh = 150;
-
-    // Outer ambient glow
-    const og = ctx.createRadialGradient(0, -10, 60, 0, -10, 220);
-    og.addColorStop(0, 'rgba(59,130,246,0)');
-    og.addColorStop(0.72, 'rgba(59,130,246,0.025)');
-    og.addColorStop(1,    'rgba(59,130,246,0.07)');
+    // Outer ambient glow — emanates from the eyes
+    const og = ctx.createRadialGradient(0, -40, 30, 0, -40, 220);
+    og.addColorStop(0,    'rgba(59,130,246,0.06)');
+    og.addColorStop(0.55, 'rgba(59,130,246,0.03)');
+    og.addColorStop(1,    'rgba(59,130,246,0)');
     ctx.beginPath();
-    ctx.ellipse(0, -10, 200, 230, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, hw * 1.6, hh * 1.5, 0, 0, Math.PI * 2);
     ctx.fillStyle = og;
     ctx.fill();
 
-    // Face skin
-    const fg = ctx.createRadialGradient(-25, -50, 0, 0, 0, Math.max(hw, hh) * 1.1);
-    fg.addColorStop(0,    '#233047');
-    fg.addColorStop(0.35, '#192638');
-    fg.addColorStop(0.65, '#0f1a28');
-    fg.addColorStop(1,    '#080d14');
+    // Face base — warm dark skin, not blue-black
+    const fg = ctx.createRadialGradient(-18, -55, 0, 0, 0, Math.max(hw, hh) * 1.05);
+    fg.addColorStop(0,    '#232030');
+    fg.addColorStop(0.3,  '#1c1a28');
+    fg.addColorStop(0.62, '#141220');
+    fg.addColorStop(0.85, '#0d0c18');
+    fg.addColorStop(1,    '#080810');
     ctx.beginPath();
     ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
     ctx.fillStyle = fg;
     ctx.fill();
 
-    // Subtle top highlight (brow bone)
-    const tg = ctx.createRadialGradient(-30, -80, 0, -30, -80, 120);
-    tg.addColorStop(0, 'rgba(120,180,255,0.07)');
-    tg.addColorStop(1, 'rgba(0,0,0,0)');
+    // Forehead highlight (brow bone)
+    const fh = ctx.createRadialGradient(-15, -80, 0, -15, -80, 100);
+    fh.addColorStop(0, 'rgba(200,195,230,0.055)');
+    fh.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.beginPath();
     ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = tg;
+    ctx.fillStyle = fh;
     ctx.fill();
-  }
 
-  _headEdge(ctx) {
-    const hw = 118, hh = 150;
-    // Blue edge glow
+    // Jaw shadow — darker bottom third
+    const js = ctx.createRadialGradient(0, 120, 0, 0, 120, 120);
+    js.addColorStop(0, 'rgba(0,0,0,0.38)');
+    js.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.beginPath();
     ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(59,130,246,0.22)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // Inner edge softening
+    ctx.fillStyle = js;
+    ctx.fill();
+
+    // Edge — very subtle blue outline
     ctx.beginPath();
-    ctx.ellipse(0, 0, hw - 3, hh - 3, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(59,130,246,0.06)';
-    ctx.lineWidth = 3;
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(59,130,246,0.18)';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
   }
 
-  _circuits(ctx) {
-    const hw = 118, hh = 150;
+  _drawFacialPlanes(ctx) {
+    const hw = 116, hh = 148;
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
     ctx.clip();
 
-    ctx.strokeStyle = 'rgba(59,130,246,0.09)';
-    ctx.lineWidth = 0.7;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    // Cheekbone highlights
+    for (const [sx, dir] of [[-1, -1], [1, 1]]) {
+      const cx = sx * 72, cy2 = 10;
+      const cg = ctx.createRadialGradient(cx, cy2, 0, cx, cy2, 45);
+      cg.addColorStop(0, 'rgba(200,190,220,0.05)');
+      cg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(cx - 50, cy2 - 50, 100, 100);
+    }
 
-    // Right cheek branch
-    ctx.beginPath();
-    ctx.moveTo(72, -28); ctx.lineTo(96, -14); ctx.lineTo(100, 22); ctx.lineTo(82, 55);
-    ctx.stroke();
-    // Left cheek branch
-    ctx.beginPath();
-    ctx.moveTo(-72, -28); ctx.lineTo(-96, -14); ctx.lineTo(-100, 22); ctx.lineTo(-82, 55);
-    ctx.stroke();
-    // Forehead branch
-    ctx.beginPath();
-    ctx.moveTo(-28, -118); ctx.lineTo(-28, -94); ctx.lineTo(18, -94); ctx.lineTo(18, -82);
-    ctx.stroke();
-    // Chin branch
-    ctx.beginPath();
-    ctx.moveTo(-18, 125); ctx.lineTo(-18, 108); ctx.lineTo(18, 108); ctx.lineTo(18, 125);
-    ctx.stroke();
-    // Temple right
-    ctx.beginPath();
-    ctx.moveTo(96, -60); ctx.lineTo(82, -52); ctx.lineTo(82, -36);
-    ctx.stroke();
-
-    // Circuit nodes
-    ctx.fillStyle = 'rgba(59,130,246,0.18)';
-    for (const [x,y] of [[72,-28],[96,-14],[100,22],[82,55],[-72,-28],[-96,-14],[-100,22],[-82,55],[-28,-118],[18,-82],[-18,125],[18,125],[96,-60],[82,-36]]) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1.8, 0, Math.PI * 2);
-      ctx.fill();
+    // Temple shadows
+    for (const tx of [-95, 95]) {
+      const tg = ctx.createRadialGradient(tx, -20, 0, tx, -20, 55);
+      tg.addColorStop(0, 'rgba(0,0,0,0.28)');
+      tg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = tg;
+      ctx.fillRect(tx - 60, -75, 120, 120);
     }
 
     ctx.restore();
   }
 
-  _eyebrows(ctx) {
+  _drawEyebrows(ctx) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(150,200,255,0.45)';
-    ctx.lineWidth   = 2.2;
+    // Natural arch — not too angular
+    ctx.strokeStyle = 'rgba(180,170,210,0.52)';
+    ctx.lineWidth   = 2.8;
     ctx.lineCap     = 'round';
+
     // Left brow
     ctx.beginPath();
-    ctx.moveTo(-66, -67); ctx.quadraticCurveTo(-44, -76, -22, -72);
+    ctx.moveTo(-68, -70);
+    ctx.bezierCurveTo(-50, -80, -28, -80, -18, -76);
     ctx.stroke();
+
     // Right brow
     ctx.beginPath();
-    ctx.moveTo(22, -72); ctx.quadraticCurveTo(44, -76, 66, -67);
+    ctx.moveTo(18, -76);
+    ctx.bezierCurveTo(28, -80, 50, -80, 68, -70);
     ctx.stroke();
     ctx.restore();
   }
 
-  _eyes(ctx) {
+  _drawEyes(ctx) {
     const ba = this.blinking
       ? Math.min(1, this.blinkProg < 1 ? this.blinkProg : 2 - this.blinkProg)
       : 0;
-    this._eye(ctx, -44, -38, ba);
-    this._eye(ctx, 44,  -38, ba);
+    this._drawEye(ctx, -44, -40, 24, 13, ba);
+    this._drawEye(ctx,  44, -40, 24, 13, ba);
   }
 
-  _eye(ctx, ex, ey, blinkAmt) {
-    const ew = 21, eh = 13.5;
-    const lx = this.lookX * 4.5;
+  _drawEye(ctx, ex, ey, ew, eh, blinkAmt) {
+    const lx = this.lookX * 5;
     const ly = this.lookY * 3;
 
-    // Eye socket shadow
-    const ss = ctx.createRadialGradient(ex, ey, 0, ex, ey, ew * 1.6);
-    ss.addColorStop(0, 'rgba(0,5,15,0.55)');
+    // Eye socket — subtle shadow around eye
+    const ss = ctx.createRadialGradient(ex, ey, 0, ex, ey, ew * 1.9);
+    ss.addColorStop(0, 'rgba(0,0,8,0.6)');
     ss.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = ss;
-    ctx.fillRect(ex - ew * 1.7, ey - eh * 1.7, ew * 3.4, eh * 3.4);
+    ctx.fillRect(ex - ew * 2, ey - eh * 2, ew * 4, eh * 4);
 
-    // Eye surround (very dark, not white)
+    // Clip to almond eye shape for everything inside
     ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#04090f';
-    ctx.fill();
-    ctx.restore();
-
-    // Iris glow halo (clipped to eye)
-    const gr = 18;
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    this._eyePath(ctx, ex, ey, ew, eh);
     ctx.clip();
-    const ig = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, gr);
-    ig.addColorStop(0,   'rgba(80,160,255,0.45)');
-    ig.addColorStop(0.5, 'rgba(59,130,246,0.14)');
-    ig.addColorStop(1,   'rgba(0,0,0,0)');
+
+    // Dark sclera base (not white — this is a stylized mask)
+    ctx.fillStyle = '#08101c';
+    ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, (eh + 2) * 2);
+
+    // Iris glow halo
+    const igr = 16;
+    const ig = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, igr);
+    ig.addColorStop(0,    'rgba(80,170,255,0.5)');
+    ig.addColorStop(0.4,  'rgba(59,130,246,0.2)');
+    ig.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = ig;
-    ctx.fillRect(ex - gr, ey - gr, gr * 2, gr * 2);
-    ctx.restore();
+    ctx.fillRect(ex - igr, ey - igr, igr * 2, igr * 2);
 
-    // Iris
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
-    ctx.clip();
-    const irg = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, 11);
-    irg.addColorStop(0,    '#a8d4ff');
-    irg.addColorStop(0.28, '#3b82f6');
-    irg.addColorStop(0.62, '#1d4ed8');
-    irg.addColorStop(1,    '#162d60');
+    // Iris — radial gradient with slight limbal ring
+    const irisG = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, 11);
+    irisG.addColorStop(0,    '#c0e0ff');
+    irisG.addColorStop(0.2,  '#60a5fa');
+    irisG.addColorStop(0.55, '#2563eb');
+    irisG.addColorStop(0.82, '#1a3a80');
+    irisG.addColorStop(1,    '#0a1830');
     ctx.beginPath();
     ctx.arc(ex + lx, ey + ly, 11, 0, Math.PI * 2);
-    ctx.fillStyle = irg;
+    ctx.fillStyle = irisG;
     ctx.fill();
-    ctx.restore();
 
     // Pupil
-    ctx.save();
     ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.beginPath();
-    ctx.arc(ex + lx, ey + ly, 5, 0, Math.PI * 2);
+    ctx.arc(ex + lx, ey + ly, 4.8, 0, Math.PI * 2);
     ctx.fillStyle = '#010308';
     ctx.fill();
-    ctx.restore();
 
-    // Catchlights
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
-    ctx.clip();
     // Main catchlight
     ctx.beginPath();
-    ctx.arc(ex + lx + 3.5, ey + ly - 3, 2.4, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(215,240,255,0.95)';
+    ctx.arc(ex + lx + 3.5, ey + ly - 3.5, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(220, 240, 255, 0.95)';
     ctx.fill();
-    // Secondary
+
+    // Secondary small catchlight
     ctx.beginPath();
-    ctx.arc(ex + lx - 2.2, ey + ly + 3.2, 1.1, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(180,220,255,0.5)';
+    ctx.arc(ex + lx - 2, ey + ly + 3, 1.1, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(160,210,255,0.5)';
     ctx.fill();
+
+    // Eyelid blink — upper lid sweeps down
+    if (blinkAmt > 0.01) {
+      const lidH = (eh * 2 + 4) * blinkAmt;
+      ctx.fillStyle = '#141020';
+      ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, lidH + 1);
+    }
+
     ctx.restore();
 
-    // Eye outline
+    // Upper eyelid crease — subtle line above eye
     ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(100,165,255,0.3)';
+    ctx.moveTo(ex - ew + 2, ey - eh * 0.5);
+    ctx.bezierCurveTo(ex - ew * 0.3, ey - eh * 1.6, ex + ew * 0.3, ey - eh * 1.55, ex + ew - 2, ey - eh * 0.3);
+    ctx.stroke();
+    ctx.restore();
+
+    // Eye outline — almond shape edge
+    ctx.save();
+    this._eyePath(ctx, ex, ey, ew, eh);
+    ctx.strokeStyle = 'rgba(80,150,255,0.28)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
 
-    // Blink eyelid
-    if (blinkAmt > 0.02) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(ex, ey, ew + 1, eh + 1, 0, 0, Math.PI * 2);
-      ctx.clip();
-      // Upper lid sweeps down
-      const lidH = (eh * 2 + 2) * blinkAmt;
-      ctx.fillStyle = '#111d2c';
-      ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, lidH + 1);
-      ctx.restore();
-    }
-  }
-
-  _nose(ctx) {
+    // Upper lash line — dark line along upper lid edge
     ctx.save();
-    ctx.strokeStyle = 'rgba(100,160,220,0.18)';
-    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(ex - ew, ey + 1);
+    ctx.bezierCurveTo(ex - ew * 0.2, ey - eh * 1.25, ex + ew * 0.35, ey - eh * 1.15, ex + ew, ey - 1);
+    ctx.strokeStyle = 'rgba(10,8,25,0.85)';
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-    // Bridge curves
-    ctx.beginPath();
-    ctx.moveTo(0, -12); ctx.quadraticCurveTo(9, 14, 7, 36);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, -12); ctx.quadraticCurveTo(-9, 14, -7, 36);
-    ctx.stroke();
-    // Nostrils
-    ctx.fillStyle = 'rgba(20,45,80,0.45)';
-    ctx.beginPath(); ctx.ellipse(-10, 40, 4, 3, -0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse( 10, 40, 4, 3,  0.3, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  _mouth(ctx) {
-    const my = 78;
-    const mw = 33;
-    const op = this.mouthOpen * 15;
+  _drawNose(ctx) {
+    ctx.save();
+
+    // Bridge — two subtle highlight lines from between brows
+    ctx.strokeStyle = 'rgba(200,190,230,0.13)';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(-6, -30);
+    ctx.bezierCurveTo(-9, 0, -10, 25, -8, 42);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(6, -30);
+    ctx.bezierCurveTo(9, 0, 10, 25, 8, 42);
+    ctx.stroke();
+
+    // Nose tip — soft rounded volume
+    const ntg = ctx.createRadialGradient(0, 44, 0, 0, 44, 18);
+    ntg.addColorStop(0, 'rgba(200,185,220,0.06)');
+    ntg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ntg;
+    ctx.beginPath();
+    ctx.arc(0, 44, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nostril shadow shapes — actual almond-shaped nostrils
+    ctx.fillStyle = 'rgba(4,4,12,0.6)';
+    ctx.save();
+    ctx.translate(-11, 46);
+    ctx.rotate(-0.25);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(11, 46);
+    ctx.rotate(0.25);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  _drawMouth(ctx) {
+    const my = 82;
+    const mw = 34;
+    const op = this.mouthOpen * 14; // max 14px opening
 
     ctx.save();
 
-    if (op > 1) {
-      // Open mouth cavity
+    // Philtrum — very subtle vertical shadow above lip
+    const phg = ctx.createLinearGradient(0, my - 22, 0, my - 6);
+    phg.addColorStop(0, 'rgba(0,0,0,0)');
+    phg.addColorStop(1, 'rgba(0,0,0,0.2)');
+    ctx.fillStyle = phg;
+    ctx.beginPath();
+    ctx.ellipse(0, my - 14, 5, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (op > 0.5) {
+      // Mouth cavity when open
       ctx.beginPath();
-      ctx.moveTo(-mw * 0.88, my);
-      ctx.bezierCurveTo(-mw * 0.45, my + 3, mw * 0.45, my + 3, mw * 0.88, my);
-      ctx.bezierCurveTo( mw * 0.45, my + op + 5, -mw * 0.45, my + op + 5, -mw * 0.88, my);
+      // Upper lip boundary curves up
+      ctx.moveTo(-mw * 0.85, my - 2);
+      ctx.bezierCurveTo(-mw * 0.4, my - 2, -mw * 0.12, my - 8 - op * 0.5, 0, my - 9 - op * 0.5);
+      ctx.bezierCurveTo(mw * 0.12, my - 8 - op * 0.5, mw * 0.4, my - 2, mw * 0.85, my - 2);
+      // Lower lip boundary curves down
+      ctx.bezierCurveTo(mw * 0.45, my + 3 + op, -mw * 0.45, my + 3 + op, -mw * 0.85, my - 2);
       ctx.closePath();
-      const mg = ctx.createLinearGradient(0, my, 0, my + op + 5);
-      mg.addColorStop(0,   'rgba(15,40,90,0.92)');
-      mg.addColorStop(0.5, 'rgba(8,22,55,0.75)');
-      mg.addColorStop(1,   'rgba(4,10,25,0.5)');
+
+      const mg = ctx.createLinearGradient(0, my - 9, 0, my + op + 3);
+      mg.addColorStop(0,   'rgba(10,5,20,0.96)');
+      mg.addColorStop(0.4, 'rgba(6,3,12,0.88)');
+      mg.addColorStop(1,   'rgba(4,2,8,0.7)');
       ctx.fillStyle = mg;
       ctx.fill();
-      // Teeth hint
-      ctx.fillStyle = 'rgba(170,210,245,0.12)';
-      ctx.fillRect(-mw * 0.55, my + 1, mw * 1.1, Math.min(op * 0.38, 4.5));
+
+      // Teeth — very subtle, only when well open
+      if (op > 5) {
+        const visH = Math.min((op - 5) * 0.6, 5);
+        ctx.fillStyle = 'rgba(210,205,230,0.1)';
+        ctx.beginPath();
+        ctx.rect(-mw * 0.6, my - 2, mw * 1.2, visH);
+        ctx.fill();
+      }
     }
 
-    // Upper lip
+    // Upper lip — cupid's bow shape
     ctx.beginPath();
-    ctx.moveTo(-mw, my);
-    ctx.bezierCurveTo(-mw * 0.5, my - 5,  -mw * 0.15, my - op * 0.45, 0, my - op * 0.52);
-    ctx.bezierCurveTo( mw * 0.15, my - op * 0.45,  mw * 0.5, my - 5,  mw, my);
-    ctx.strokeStyle = 'rgba(120,185,255,0.68)';
-    ctx.lineWidth = 1.6;
+    ctx.moveTo(-mw, my - 2);
+    // Left side of upper lip
+    ctx.bezierCurveTo(-mw * 0.65, my - 3, -mw * 0.28, my - 5 - op * 0.45, -mw * 0.08, my - 8 - op * 0.5);
+    // Cupid's bow peak (center dip then up)
+    ctx.bezierCurveTo(-mw * 0.04, my - 9 - op * 0.5, mw * 0.04, my - 9 - op * 0.5, mw * 0.08, my - 8 - op * 0.5);
+    // Right side of upper lip
+    ctx.bezierCurveTo(mw * 0.28, my - 5 - op * 0.45, mw * 0.65, my - 3, mw, my - 2);
+    ctx.strokeStyle = 'rgba(160,130,180,0.6)';
+    ctx.lineWidth = 1.5;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // Lower lip
+    // Lower lip — full, rounded
     ctx.beginPath();
-    ctx.moveTo(-mw * 0.82, my + 1.5);
-    ctx.bezierCurveTo(-mw * 0.38, my + op + 7, mw * 0.38, my + op + 7, mw * 0.82, my + 1.5);
-    ctx.strokeStyle = 'rgba(90,155,240,0.52)';
-    ctx.lineWidth = 1.6;
+    ctx.moveTo(-mw * 0.88, my - 1);
+    ctx.bezierCurveTo(-mw * 0.45, my + 4 + op, mw * 0.45, my + 4 + op, mw * 0.88, my - 1);
+    ctx.strokeStyle = 'rgba(140,110,165,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Lip fill — very subtle color
+    ctx.beginPath();
+    ctx.moveTo(-mw, my - 2);
+    ctx.bezierCurveTo(-mw * 0.65, my - 3, -mw * 0.08, my - 9 - op * 0.5, 0, my - 9 - op * 0.5);
+    ctx.bezierCurveTo(mw * 0.08, my - 9 - op * 0.5, mw * 0.65, my - 3, mw, my - 2);
+    ctx.bezierCurveTo(mw * 0.45, my + 4 + op, -mw * 0.45, my + 4 + op, -mw, my - 2);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(120,80,130,0.08)';
+    ctx.fill();
+
+    // Lip line — the meeting seam
+    ctx.beginPath();
+    ctx.moveTo(-mw * 0.85, my - 1.5);
+    ctx.bezierCurveTo(-mw * 0.5, my, mw * 0.5, my, mw * 0.85, my - 1.5);
+    ctx.strokeStyle = 'rgba(40,20,55,0.7)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.restore();
@@ -1032,15 +1033,14 @@ class MoritzFace {
   destroy()     { this._dead = true; }
 }
 
-// ── Init avatar ───────────────────────────────────────────────────────────────
+// ── Init face ──────────────────────────────────────────────────
 let _face = null;
-
-(function initFace() {
+(function() {
   const cv = document.getElementById('moritz-canvas');
   if (cv) _face = new MoritzFace(cv);
 })();
 
-// ── TTS ───────────────────────────────────────────────────────────────────────
+// ── TTS ────────────────────────────────────────────────────────
 let voices = [];
 window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); };
 voices = window.speechSynthesis.getVoices();
@@ -1062,7 +1062,7 @@ function speak(text) {
   window.speechSynthesis.speak(utt);
 }
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────
 let messages  = [];
 let userName  = '';
 let userEmail = '';
@@ -1072,35 +1072,59 @@ let ended     = false;
 let geoData   = null;
 let chatOpen  = false;
 
-// ── Chat open / close ─────────────────────────────────────────────────────────
-function openChat() {
+// ── Cross-fade open/close ──────────────────────────────────────
+async function openChat() {
   if (chatOpen) return;
   chatOpen = true;
-  document.getElementById('page').classList.add('chat-mode');
-  // Remove click-to-open from canvas
+
+  const page = document.getElementById('page');
+
+  // Fade everything out
+  page.style.transition = 'opacity 0.38s ease';
+  page.style.opacity    = '0';
+  await delay(380);
+
+  // Switch layout instantly while invisible
+  page.classList.add('chat-mode');
   document.getElementById('moritz-canvas').style.cursor = 'default';
   document.getElementById('moritz-canvas').onclick = null;
-  // Focus input after transition
-  setTimeout(() => document.getElementById('chat-input').focus(), 520);
+
+  // Fade back in
+  page.style.opacity = '1';
+  await delay(400);
+
+  document.getElementById('chat-input').focus();
   if (messages.length === 0) startConversation();
 }
 
-function closeChat() {
+async function closeChat() {
   if (!chatOpen) return;
-  chatOpen = false;
+
   window.speechSynthesis.cancel();
   if (_face) _face.setTalking(false);
-  document.getElementById('page').classList.remove('chat-mode');
+
+  const page = document.getElementById('page');
+
+  page.style.transition = 'opacity 0.38s ease';
+  page.style.opacity    = '0';
+  await delay(380);
+
+  page.classList.remove('chat-mode');
   document.getElementById('moritz-canvas').style.cursor = 'pointer';
   document.getElementById('moritz-canvas').onclick = openChat;
+
+  page.style.opacity = '1';
+  chatOpen = false;
 }
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && chatOpen) closeChat(); });
 document.getElementById('chat-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
 
-// ── Render helpers ────────────────────────────────────────────────────────────
+// ── Render helpers ─────────────────────────────────────────────
 function addMsg(role, text, thinking) {
   const wrap = document.getElementById('messages');
   const div  = document.createElement('div');
@@ -1122,15 +1146,13 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Conversation ──────────────────────────────────────────────────────────────
+// ── Conversation ───────────────────────────────────────────────
 async function startConversation() {
   const opener = "Hi, I'm Moritz. What's your name?";
   messages.push({ role: 'assistant', content: opener });
-  // Small delay so the chat section is visible before the message appears
-  setTimeout(() => {
-    addMsg('moritz', opener);
-    speak(opener);
-  }, 400);
+  await delay(200);
+  addMsg('moritz', opener);
+  speak(opener);
 }
 
 async function sendMsg() {
@@ -1195,7 +1217,7 @@ async function sendMsg() {
   document.getElementById('chat-input').focus();
 }
 
-// ── Physical field collection ─────────────────────────────────────────────────
+// ── Logging / inference ────────────────────────────────────────
 function collectPhysical() {
   let referrer = 'direct';
   try { if (document.referrer) referrer = new URL(document.referrer).hostname; } catch {}
