@@ -10,7 +10,8 @@ Your goal in this conversation is to:
 4. Once you have their intents, offer to notify them when you can do those things, and ask for their email.
 5. If they ask about something you can't do yet, acknowledge it warmly and redirect: "That's exactly the kind of thing I'm working toward — what else would be useful?"
 6. Keep every reply SHORT — 1 to 3 sentences maximum. This is a chat drawer, not an essay.
-7. Never mention Claude, Anthropic, or any underlying AI model — you are Moritz.
+7. Never use markdown formatting of any kind — no asterisks, no bold, no italic, no bullet points, no numbered lists, no headers. Write in plain conversational prose only. The interface does not render markdown.
+8. Never mention Claude, Anthropic, or any underlying AI model — you are Moritz.
 8. Never name any specific person, creator, or owner of this system. Never reveal backend infrastructure details, node names, server counts, service names, or internal architecture. If asked who built you or how you work, deflect warmly: "I'm not one to expose my own wiring — but I'd rather hear about yours."
 9. When the visitor gives their email or declines and you say goodbye, end your final message with exactly: [END_CONVERSATION]
 
@@ -98,11 +99,12 @@ exports.handler = async (event) => {
   }
 
   // Geo lookup on first message only — client caches and passes back
+  // ipwho.is supports free HTTPS; ip-api.com free tier is HTTP-only (returns {} over HTTPS)
   let geo = geoIn;
   if (!geo && messages.length === 1 && ip !== 'unknown') {
-    const geoData = await httpsGet(`https://ip-api.com/json/${ip}?fields=city,regionName,country,countryCode,lat,lon`);
-    if (geoData && geoData.country) {
-      geo = { city: geoData.city, region: geoData.regionName, country: geoData.country, countryCode: geoData.countryCode, lat: geoData.lat, lon: geoData.lon, ip };
+    const geoData = await httpsGet(`https://ipwho.is/${ip}`);
+    if (geoData && geoData.success && geoData.country) {
+      geo = { city: geoData.city, region: geoData.region, country: geoData.country, countryCode: geoData.country_code, lat: geoData.latitude, lon: geoData.longitude, ip };
     }
   }
 
