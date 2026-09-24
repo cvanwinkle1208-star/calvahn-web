@@ -86,6 +86,23 @@
     animation: ghost-breathe 5s ease-in-out infinite, ghost-float 9s ease-in-out infinite;
   }
 
+  /* Desktop — ghost haunts the right edge, flanks content */
+  @keyframes ghost-float-right {
+    0%   { transform: translateY(-50%); }
+    35%  { transform: translateY(calc(-50% - 11px)); }
+    65%  { transform: translateY(calc(-50% + 7px)); }
+    100% { transform: translateY(-50%); }
+  }
+
+  @media (min-width: 1050px) {
+    .face-panel {
+      left: auto;
+      right: 4vw;
+      transform: translateY(-50%);
+      animation: ghost-breathe 5s ease-in-out infinite, ghost-float-right 9s ease-in-out infinite;
+    }
+  }
+
   /* Hide landing ghost on mobile — too small to look good */
   @media (max-width: 767px) {
     .face-panel { display: none; }
@@ -604,26 +621,12 @@
 
   <!-- Left: landing content -->
   <div class="content-panel">
-    <div class="status-bar">
-      <span class="status-dot"></span>
-      <span id="status-text">Online</span>
-    </div>
 
     <div class="hero">
       <div class="hero-badge"><span class="hero-badge-dot"></span>Private platform · early access</div>
       <div class="wordmark">Moritz</div>
       <div class="tagline-main">Nothing fails unnoticed.</div>
       <div class="tagline">He watches every system, reasons about what matters, and acts — without waking anyone up.</div>
-    </div>
-
-    <div class="cta-wrap">
-      <div class="cta-row">
-        <button id="meet-btn" onclick="openChat()">
-          Meet Moritz <span class="arrow">→</span>
-        </button>
-        <span class="not-for-sale">Not for sale — yet</span>
-      </div>
-      <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
     </div>
 
     <div id="pulse-bar" class="pulse-bar">
@@ -641,6 +644,16 @@
       </div>
     </div>
 
+    <div class="cta-wrap">
+      <div class="cta-row">
+        <button id="meet-btn" onclick="openChat()">
+          Meet Moritz <span class="arrow">→</span>
+        </button>
+        <span class="not-for-sale">Not for sale — yet</span>
+      </div>
+      <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
+    </div>
+
     <hr class="divider">
 
     <div class="about-highlight">
@@ -648,11 +661,9 @@
     </div>
 
     <p class="about">
-      He runs on a private distributed platform, monitors every system, reasons about what matters,
+      He runs on a private distributed platform, reasons about what matters,
       and acts — without waking anyone up unless he has to.
-      He learns from every outcome and gets better at the job over time.
-      The people who rely on him don't need to understand technology.
-      <strong>That's the point.</strong>
+      The people who rely on him don't need to understand technology. <strong>That's the point.</strong>
     </p>
 
     <div class="founder-line">Built by one person, for everything that shouldn't fail.</div>
@@ -720,7 +731,6 @@ async function fetchPulse() {
       document.getElementById('p-vram').textContent  = d.vram_gb ? d.vram_gb + ' GB' : '—';
     }
     document.getElementById('pulse-bar').classList.add('live');
-    document.getElementById('status-text').textContent = 'Online · ' + d.nodes_online + ' systems active';
   } catch { /* silent */ }
 }
 fetchPulse();
@@ -948,10 +958,10 @@ async function openChat() {
 
   const page = document.getElementById('page');
 
-  // Slow fade-out — the whole landing dissolves
-  page.style.transition = 'opacity 1.0s ease';
+  // Fade-out — landing dissolves into dark
+  page.style.transition = 'opacity 0.55s ease';
   page.style.opacity    = '0';
-  await delay(1050);
+  await delay(600);
 
   // Switch to full-screen mode while invisible
   page.classList.add('chat-mode');
@@ -960,10 +970,10 @@ async function openChat() {
   cv.style.cursor = 'default';
   cv.onclick = null;
 
-  // Fade in — apparition + chat materialise
-  page.style.transition = 'opacity 1.3s ease';
+  // Fade in — apparition materialises
+  page.style.transition = 'opacity 0.75s ease';
   page.style.opacity = '1';
-  await delay(1350);
+  await delay(800);
 
   document.getElementById('chat-input').focus();
   if (messages.length === 0) startConversation();
@@ -977,16 +987,16 @@ async function closeChat() {
 
   const page = document.getElementById('page');
 
-  page.style.transition = 'opacity 0.85s ease';
+  page.style.transition = 'opacity 0.50s ease';
   page.style.opacity    = '0';
-  await delay(880);
+  await delay(540);
 
   page.classList.remove('chat-mode');
   document.body.classList.remove('chat-active');
   document.getElementById('moritz-canvas').style.cursor = 'pointer';
   document.getElementById('moritz-canvas').onclick = openChat;
 
-  page.style.transition = 'opacity 1.0s ease';
+  page.style.transition = 'opacity 0.65s ease';
   page.style.opacity = '1';
   chatOpen = false;
 }
