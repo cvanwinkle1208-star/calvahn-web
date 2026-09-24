@@ -2,7 +2,7 @@ const https = require('https');
 
 function httpsGet(options) {
   return new Promise((resolve) => {
-    const req = https.request(options, (res) => {
+    const req = https.request({ ...options, timeout: 4000 }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
@@ -10,6 +10,7 @@ function httpsGet(options) {
         catch { resolve({ status: res.statusCode, body: null }); }
       });
     });
+    req.on('timeout', () => { req.destroy(); });
     req.on('error', () => resolve({ status: 0, body: null }));
     req.end();
   });
