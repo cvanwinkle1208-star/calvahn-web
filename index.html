@@ -42,10 +42,11 @@
   /* ── Page wrap — NO transition, JS drives the cross-fade ─── */
   #page {
     width: 100%;
-    max-width: 1020px;
+    max-width: 680px;
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     gap: 64px;
   }
 
@@ -53,13 +54,12 @@
   .content-panel {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: 540px;
+    max-width: 560px;
   }
 
-  /* ── Face panel ────────────────────────────────────────────── */
+  /* ── Face panel — hidden on landing, shown only in chat mode ── */
   .face-panel {
-    flex: 0 0 380px;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
   }
@@ -171,6 +171,7 @@
     height: auto;
     display: block;
     cursor: pointer;
+    filter: blur(2.5px);
   }
 
   /* Large canvas in chat mode — face is the scene */
@@ -179,6 +180,12 @@
     width: auto;
     max-width: 85vw;
     cursor: default;
+    filter: blur(2px);
+  }
+
+  /* Show face panel only in chat mode */
+  #page.chat-mode .face-panel {
+    display: flex !important;
   }
 
   /* ── Chat section ──────────────────────────────────────────── */
@@ -586,285 +593,119 @@ async function fetchPulse() {
 fetchPulse();
 setInterval(fetchPulse, 10000);
 
-// ── Moritz Face — translucent apparition ───────────────────────
+// ── Moritz Face — fog apparition ────────────────────────────────
 class MoritzFace {
   constructor(canvas) {
     this.cv  = canvas;
     this.ctx = canvas.getContext('2d');
     this.W = 400; this.H = 480;
-    this.cx = 200; this.cy = 188;
+    this.cx = 200; this.cy = 192;
 
-    this.talking   = false; this.t  = 0; this.mouthOpen = 0;
-    this.blinkT    = 0; this.nextBlink = 2 + Math.random() * 4;
+    this.talking   = false; this.t = 0;
+    this.mouthOpen = 0;
+    this.wordSpike = 0;
+    this.blinkT    = 0; this.nextBlink = 2.5 + Math.random() * 5;
     this.blinking  = false; this.blinkProg = 0;
-    this.lookX     = 0; this.lookY   = 0;
-    this.targetX   = 0; this.targetY = 0;
-    this.lookT     = 0; this.nextLook = 3 + Math.random() * 4;
     this._dead     = false;
 
-    // Vertices: realistic proportions — width 244px, height 344px (≈0.71 ratio).
-    // Eyes at y=-38, 41% from head top. Face features overlay the mesh.
-    this._base = [
-      // 0-13: head outline
-      [0,-162],[-55,-146],[-102,-86],[-122,-6],[-110,76],
-      [-80,135],[-32,164],[0,172],
-      [32,164],[80,135],[110,76],[122,-6],[102,-86],[55,-146],
-      // 14-16: upper forehead
-      [0,-126],[-48,-112],[48,-112],
-      // 17-20: mid forehead / temple
-      [-95,-38],[95,-38],[-108,28],[108,28],
-      // 21-24: lower cheek / jaw
-      [-94,90],[94,90],[-48,124],[48,124],
-      // 25-30: nose region
-      [0,-16],[-36,0],[36,0],[0,42],[-18,50],[18,50],
-      // 31-38: mouth / chin fill
-      [-20,66],[20,66],[-28,82],[0,78],[28,82],
-      [0,96],[-15,104],[15,104],
-      // 39-41: chin
-      [0,132],[-38,144],[38,144],
-    ];
-
-    this._tris = this._delaunay(this._base);
     this._tick();
-  }
-
-  _delaunay(pts) {
-    const n=pts.length, BIG=2600;
-    const all=[...pts,[0,-BIG*1.5],[BIG*1.8,BIG],[-BIG*1.8,BIG]];
-    let tris=[[n,n+1,n+2]];
-    for (let p=0;p<n;p++) {
-      const bad=tris.filter(t=>this._inCirc(all[t[0]],all[t[1]],all[t[2]],all[p]));
-      const poly=[];
-      for (const t of bad) for (let i=0;i<3;i++) {
-        const e0=t[i],e1=t[(i+1)%3];
-        if (!bad.some(o=>o!==t&&o.includes(e0)&&o.includes(e1))) poly.push([e0,e1]);
-      }
-      tris=tris.filter(t=>!bad.includes(t));
-      for (const [e0,e1] of poly) tris.push([e0,e1,p]);
-    }
-    return tris.filter(t=>t[0]<n&&t[1]<n&&t[2]<n);
-  }
-
-  _inCirc([ax,ay],[bx,by],[cx,cy],[px,py]) {
-    const D=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
-    if (Math.abs(D)<1e-10) return false;
-    const a2=ax*ax+ay*ay,b2=bx*bx+by*by,c2=cx*cx+cy*cy;
-    const ux=(a2*(by-cy)+b2*(cy-ay)+c2*(ay-by))/D;
-    const uy=(a2*(cx-bx)+b2*(ax-cx)+c2*(bx-ax))/D;
-    return (px-ux)**2+(py-uy)**2<(ax-ux)**2+(ay-uy)**2-1e-10;
   }
 
   _tick() {
     if (this._dead) return;
-    const dt=0.016;
-    this.t+=dt; this.blinkT+=dt; this.lookT+=dt;
-    if (!this.blinking&&this.blinkT>=this.nextBlink) {
-      this.blinking=true; this.blinkProg=0; this.blinkT=0;
-      this.nextBlink=2.5+Math.random()*4;
+    const dt = 0.016;
+    this.t += dt; this.blinkT += dt;
+    if (!this.blinking && this.blinkT >= this.nextBlink) {
+      this.blinking = true; this.blinkProg = 0; this.blinkT = 0;
+      this.nextBlink = 2.5 + Math.random() * 5;
     }
     if (this.blinking) {
-      this.blinkProg+=dt*8;
-      if (this.blinkProg>=2){this.blinking=false;this.blinkProg=0;}
+      this.blinkProg += dt * 6;
+      if (this.blinkProg >= 2) { this.blinking = false; this.blinkProg = 0; }
     }
-    if (this.lookT>=this.nextLook) {
-      this.targetX=(Math.random()-0.5)*1.5;
-      this.targetY=(Math.random()-0.5)*0.7;
-      this.nextLook=2.5+Math.random()*5; this.lookT=0;
-    }
-    this.lookX+=(this.targetX-this.lookX)*0.04;
-    this.lookY+=(this.targetY-this.lookY)*0.04;
     if (this.talking) {
-      const tgt=0.3+Math.abs(Math.sin(this.t*11))*0.4+Math.abs(Math.sin(this.t*7.3))*0.3;
-      this.mouthOpen+=(Math.min(1,tgt)-this.mouthOpen)*0.25;
-    } else { this.mouthOpen*=0.82; }
+      const rhythm = Math.abs(Math.sin(this.t * 9.8)) * 0.45
+                   + Math.abs(Math.sin(this.t * 5.9)) * 0.30
+                   + Math.abs(Math.sin(this.t * 15.1)) * 0.25;
+      const target = 0.18 + rhythm * 0.65 + this.wordSpike * 0.25;
+      this.mouthOpen += (Math.min(1, target) - this.mouthOpen) * 0.28;
+    } else {
+      this.mouthOpen *= 0.78;
+    }
+    this.wordSpike *= 0.82;
     this._draw();
-    requestAnimationFrame(()=>this._tick());
+    requestAnimationFrame(() => this._tick());
+  }
+
+  triggerWord() {
+    this.wordSpike = 0.75 + Math.random() * 0.25;
+  }
+
+  _blob(x, y, rx, ry, r, g, b, alpha) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(rx, ry);
+    const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    grd.addColorStop(0,    `rgba(${r},${g},${b},${+alpha.toFixed(3)})`);
+    grd.addColorStop(0.48, `rgba(${r},${g},${b},${+(alpha * 0.48).toFixed(3)})`);
+    grd.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(-1.02, -1.02, 2.04, 2.04);
+    ctx.restore();
   }
 
   _draw() {
-    const ctx=this.ctx;
-    ctx.clearRect(0,0,this.W,this.H);
-    const fy=Math.sin(this.t*0.6)*4, fx=Math.sin(this.t*0.37)*1.5;
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.W, this.H);
+    const drift = Math.sin(this.t * 0.33) * 1.8;
     ctx.save();
-    ctx.translate(this.cx+fx, this.cy+fy);
+    ctx.translate(this.cx, this.cy + drift);
 
+    const pulse = 0.88 + Math.sin(this.t * 0.40) * 0.08;
     const ba = this.blinking
-      ? Math.min(1,this.blinkProg<1?this.blinkProg:2-this.blinkProg) : 0;
+      ? Math.min(1, this.blinkProg < 1 ? this.blinkProg : 2 - this.blinkProg) : 0;
+    const fd = 1 - ba;
+    const op = this.mouthOpen;
+    const bl = this._blob.bind(this);
+    const ap = v => +(v * pulse).toFixed(3);
 
-    // ── 1. Outer luminous aura ─────────────────────────────────
-    const aura=ctx.createRadialGradient(0,-5,40,0,-5,225);
-    aura.addColorStop(0,  'rgba(45,115,230,0.16)');
-    aura.addColorStop(0.5,'rgba(20,70,190,0.07)');
-    aura.addColorStop(1,  'rgba(0,0,20,0)');
-    ctx.fillStyle=aura;
-    ctx.beginPath(); ctx.ellipse(0,0,160,195,0,0,Math.PI*2); ctx.fill();
+    // ── Layered face mist ─────────────────────────────────────
+    bl(  0,  -5, 115, 162, 52, 135, 232, ap(0.22));
+    bl(  0,  -8,  80, 108, 80, 170, 248, ap(0.13));
 
-    // ── 2. Mesh — nearly transparent fills, glowing edges ──────
-    for (const [a,b,c] of this._tris) {
-      const [ax,ay]=this._base[a],[bx,by]=this._base[b],[cx2,cy2]=this._base[c];
-      const mcx=(ax+bx+cx2)/3, mcy=(ay+by+cy2)/3;
+    // ── Structural fog patches ────────────────────────────────
+    bl(  0, -78,  60,  48, 105, 188, 255, ap(0.13));
+    bl(-52,  18,  48,  36,  65, 145, 238, ap(0.11));
+    bl( 52,  18,  48,  36,  65, 145, 238, ap(0.11));
+    bl(  0, 114,  40,  30,  60, 132, 225, ap(0.10));
+    bl(  0,   4,   9,  42, 112, 190, 255, ap(0.08));
 
-      // Very slight fill — face is an apparition
-      const R=150, nx=mcx/R, ny=mcy/R;
-      const nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
-      const dot=Math.max(0,-0.28*nx-0.40*ny+0.87*nz);
-      const alpha=0.04+dot*0.09; // 0.04–0.13
-      ctx.beginPath();
-      ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx2,cy2); ctx.closePath();
-      ctx.fillStyle=`rgba(55,130,230,${alpha.toFixed(2)})`;
-      ctx.fill();
-
-      // Glowing edge — this is the dominant visible structure
-      ctx.save();
-      ctx.shadowColor='rgba(80,185,255,0.55)';
-      ctx.shadowBlur=4;
-      ctx.strokeStyle='rgba(88,185,255,0.40)';
-      ctx.lineWidth=0.65;
-      ctx.stroke();
-      ctx.restore();
+    // ── Eyes — hollow dark voids ──────────────────────────────
+    if (fd > 0.02) {
+      bl(-52, -36, 30, 15, 2,  5, 16, ap(0.52 * fd));
+      bl( 52, -36, 30, 15, 2,  5, 16, ap(0.52 * fd));
+      bl(-52, -36, 19, 11, 28, 75, 192, ap(0.050 * fd));
+      bl( 52, -36, 19, 11, 28, 75, 192, ap(0.050 * fd));
     }
 
-    // ── 3. Vertex glow dots ────────────────────────────────────
-    for (const [vx,vy] of this._base) {
-      const vg=ctx.createRadialGradient(vx,vy,0,vx,vy,5);
-      vg.addColorStop(0,'rgba(160,228,255,0.55)');
-      vg.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=vg; ctx.fillRect(vx-5,vy-5,10,10);
-      ctx.beginPath(); ctx.arc(vx,vy,1.4,0,Math.PI*2);
-      ctx.fillStyle='rgba(185,238,255,0.70)'; ctx.fill();
+    // ── Mouth — fog parting ───────────────────────────────────
+    const gap = op * 15;
+    if (op > 0.05) {
+      bl(0, 82 + gap * 0.18, 22, Math.max(0.5, gap * 0.9), 2, 5, 16, +(op * 0.62).toFixed(3));
     }
-
-    // ── 4. Head outline glow ───────────────────────────────────
-    ctx.save();
-    ctx.beginPath();
-    this._base.slice(0,14).forEach(([x,y],i)=>{ i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.closePath();
-    ctx.shadowColor='rgba(80,185,255,0.5)';
-    ctx.shadowBlur=10;
-    ctx.strokeStyle='rgba(95,192,255,0.35)';
-    ctx.lineWidth=1.2;
-    ctx.stroke();
-    ctx.restore();
-
-    // ── 5. Face features (drawn on top, always readable) ───────
-    const lx=this.lookX*6, ly=this.lookY*4, fd=1-ba;
-
-    // Eyebrows — thin glowing arcs
-    ctx.save();
-    ctx.shadowColor='rgba(120,200,255,0.5)';
-    ctx.shadowBlur=6;
-    ctx.strokeStyle='rgba(140,205,255,0.50)';
-    ctx.lineWidth=1.8; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(-80,-62); ctx.bezierCurveTo(-56,-78,-30,-82,-8,-78); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(80,-62); ctx.bezierCurveTo(56,-78,30,-82,8,-78); ctx.stroke();
-    ctx.restore();
-
-    // Eyes
-    const EYES=[[-56,-38],[56,-38]], EW=28, EH=14;
-    for (const [ecx,ecy] of EYES) {
-      // Ambient eye halo
-      const oh=ctx.createRadialGradient(ecx+lx,ecy+ly,12,ecx+lx,ecy+ly,52);
-      oh.addColorStop(0,'rgba(30,80,220,0.25)');
-      oh.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.beginPath(); ctx.arc(ecx+lx,ecy+ly,52,0,Math.PI*2);
-      ctx.fillStyle=oh; ctx.fill();
-
-      // Dark almond socket
-      ctx.save();
-      this._almond(ctx,ecx,ecy,EW,EH);
-      ctx.clip();
-      ctx.fillStyle='rgba(3,6,18,0.92)';
-      ctx.fillRect(ecx-EW-2,ecy-EH-2,(EW+2)*2,(EH+2)*2);
-
-      if (fd>0.04) {
-        // Iris glow — bright, the signature feature
-        const gi=ctx.createRadialGradient(ecx+lx,ecy+ly,0,ecx+lx,ecy+ly,EW*0.88);
-        gi.addColorStop(0,   `rgba(220,248,255,${(0.96*fd).toFixed(2)})`);
-        gi.addColorStop(0.18,`rgba(125,196,255,${(0.80*fd).toFixed(2)})`);
-        gi.addColorStop(0.50,`rgba(52,120,248,${(0.40*fd).toFixed(2)})`);
-        gi.addColorStop(1,   'rgba(0,0,0,0)');
-        ctx.beginPath(); ctx.arc(ecx+lx,ecy+ly,EW*0.88,0,Math.PI*2);
-        ctx.fillStyle=gi; ctx.fill();
-        // Pupil
-        ctx.beginPath(); ctx.arc(ecx+lx,ecy+ly,5.5,0,Math.PI*2);
-        ctx.fillStyle=`rgba(1,2,10,${(0.97*fd+0.03).toFixed(2)})`; ctx.fill();
-        // Catchlight
-        ctx.beginPath(); ctx.arc(ecx+lx+4,ecy+ly-3.5,2.2,0,Math.PI*2);
-        ctx.fillStyle=`rgba(240,252,255,${(0.92*fd).toFixed(2)})`; ctx.fill();
-      }
-      ctx.restore();
-
-      // Almond rim — glowing edge
-      ctx.save();
-      ctx.shadowColor=`rgba(80,180,255,${(0.7*fd).toFixed(2)})`;
-      ctx.shadowBlur=8;
-      this._almond(ctx,ecx,ecy,EW,EH);
-      ctx.strokeStyle=`rgba(100,188,255,${(0.55*fd).toFixed(2)})`;
-      ctx.lineWidth=1.0; ctx.stroke();
-      ctx.restore();
-    }
-
-    // Nose — bridge line + tip glow
-    ctx.save();
-    ctx.shadowColor='rgba(120,200,255,0.35)';
-    ctx.shadowBlur=5;
-    ctx.strokeStyle='rgba(110,185,255,0.30)';
-    ctx.lineWidth=1.2; ctx.lineCap='round';
-    // Left bridge
-    ctx.beginPath(); ctx.moveTo(-7,-26); ctx.bezierCurveTo(-9,-8,-10,18,-8,38); ctx.stroke();
-    // Right bridge
-    ctx.beginPath(); ctx.moveTo(7,-26); ctx.bezierCurveTo(9,-8,10,18,8,38); ctx.stroke();
-    ctx.restore();
-    // Nose tip glow
-    const ntg=ctx.createRadialGradient(0,42,0,0,42,14);
-    ntg.addColorStop(0,'rgba(160,220,255,0.18)');
-    ntg.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=ntg; ctx.fillRect(-14,28,28,30);
-
-    // Mouth — subtle glowing lips, opens when talking
-    const op=this.mouthOpen;
-    ctx.save();
-    ctx.shadowColor='rgba(110,190,255,0.40)';
-    ctx.shadowBlur=5;
-    ctx.strokeStyle='rgba(105,180,255,0.38)';
-    ctx.lineWidth=1.3; ctx.lineCap='round';
-    // Lip seam (resting / always visible)
-    ctx.beginPath(); ctx.moveTo(-26,82); ctx.bezierCurveTo(-12,80,12,80,26,82); ctx.stroke();
-    // Lower lip expands when talking
-    ctx.beginPath();
-    ctx.moveTo(-22,83); ctx.bezierCurveTo(-10,88+op*15,10,88+op*15,22,83); ctx.stroke();
-    ctx.restore();
-    // Mouth cavity when open
-    if (op>0.12) {
-      ctx.save();
-      this._almond(ctx,0,84,18,5+op*10);
-      ctx.clip();
-      ctx.fillStyle=`rgba(2,4,16,${(op*0.9).toFixed(2)})`;
-      ctx.fillRect(-22,74,44,40);
-      ctx.restore();
-    }
+    bl(0, 78 - gap * 0.22, 20, 5 + gap * 0.12, 88, 170, 248, ap(0.088 + op * 0.07));
+    bl(0, 86 + gap * 0.78, 18, 6 + gap * 0.18, 78, 152, 238, ap(0.070 + op * 0.05));
 
     ctx.restore();
   }
 
-  _almond(ctx,ex,ey,ew,eh) {
-    ctx.beginPath();
-    ctx.moveTo(ex-ew,ey);
-    ctx.bezierCurveTo(ex-ew*0.3,ey-eh*1.25,ex+ew*0.3,ey-eh*1.25,ex+ew,ey);
-    ctx.bezierCurveTo(ex+ew*0.3,ey+eh*1.05,ex-ew*0.3,ey+eh*1.05,ex-ew,ey);
-    ctx.closePath();
-  }
-
-  setTalking(v){this.talking=v;}
-  destroy(){this._dead=true;}
+  setTalking(v) { this.talking = v; }
+  destroy()     { this._dead = true; }
 }
 
-// ── Init face ──────────────────────────────────────────────────
+// ── Init face (lazy — created when chat mode opens) ────────────
 let _face = null;
-(function() {
-  const cv = document.getElementById('moritz-canvas');
-  if (cv) _face = new MoritzFace(cv);
-})();
 
 // ── TTS ────────────────────────────────────────────────────────
 let voices = [];
@@ -882,9 +723,10 @@ function speak(text) {
                  || voices.find(v => /en[-_]US/i.test(v.lang))
                  || voices[0];
   if (preferred) utt.voice = preferred;
-  utt.onstart = () => { if (_face) _face.setTalking(true); };
-  utt.onend   = () => { if (_face) _face.setTalking(false); };
-  utt.onerror = () => { if (_face) _face.setTalking(false); };
+  utt.onstart    = () => { if (_face) _face.setTalking(true); };
+  utt.onend      = () => { if (_face) _face.setTalking(false); };
+  utt.onerror    = () => { if (_face) _face.setTalking(false); };
+  utt.onboundary = (e) => { if (e.name === 'word' && _face) _face.triggerWord(); };
   window.speechSynthesis.speak(utt);
 }
 
@@ -913,8 +755,10 @@ async function openChat() {
   // Switch to full-screen mode while invisible
   page.classList.add('chat-mode');
   document.body.classList.add('chat-active');
-  document.getElementById('moritz-canvas').style.cursor = 'default';
-  document.getElementById('moritz-canvas').onclick = null;
+  const cv = document.getElementById('moritz-canvas');
+  cv.style.cursor = 'default';
+  cv.onclick = null;
+  if (!_face) _face = new MoritzFace(cv);
 
   // Fade in — apparition + chat materialise
   page.style.transition = 'opacity 1.3s ease';
