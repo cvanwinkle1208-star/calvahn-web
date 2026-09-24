@@ -33,19 +33,268 @@
 
   body {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  /* ── Page layout ──────────────────────────────── */
+  .page-wrap {
+    width: 100%;
+    max-width: 1020px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 64px;
+    transition: max-width 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+                gap       0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ── Content panel ────────────────────────────── */
+  .content-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 540px;
+    opacity: 1;
+    overflow: hidden;
+    transition: opacity 0.3s ease,
+                max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                flex      0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ── Face panel ───────────────────────────────── */
+  .face-panel {
+    flex: 0 0 380px;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: max(40px, 8vh) 24px 48px;
-    min-height: 100vh;
+    transition: flex 0.55s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .wrap {
+  /* ── CHAT MODE ────────────────────────────────── */
+  .page-wrap.chat-mode {
+    max-width: 520px;
+    gap: 0;
+    justify-content: center;
+  }
+
+  .page-wrap.chat-mode .content-panel {
+    flex: 0 0 0;
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .page-wrap.chat-mode .face-panel {
+    flex: 0 0 100%;
+    max-width: 520px;
     width: 100%;
-    max-width: 640px;
   }
 
-  /* ── Status bar ─────────────────────────────── */
+  /* ── Face header (chat mode only) ─────────────── */
+  .face-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px 10px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s 0.2s, max-height 0.3s;
+  }
+
+  .page-wrap.chat-mode .face-header {
+    opacity: 1;
+    max-height: 48px;
+  }
+
+  .face-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font-mono);
+    letter-spacing: 0.3px;
+  }
+
+  .face-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: dot-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+    50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+  }
+
+  .face-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .face-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .face-close:hover {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.3);
+  }
+
+  /* ── Canvas ───────────────────────────────────── */
+  .canvas-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  #moritz-canvas {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    display: block;
+    cursor: pointer;
+  }
+
+  /* ── Chat section (appears in chat mode) ──────── */
+  .chat-section {
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid transparent;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s 0.2s;
+  }
+
+  .page-wrap.chat-mode .chat-section {
+    max-height: 420px;
+    border-top-color: var(--border);
+  }
+
+  #messages {
+    overflow-y: auto;
+    padding: 14px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    min-height: 60px;
+    max-height: 300px;
+    scroll-behavior: smooth;
+  }
+
+  #messages::-webkit-scrollbar { width: 3px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+    animation: msgIn 0.18s ease;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .msg.moritz { align-self: flex-start; }
+  .msg.user   { align-self: flex-end; }
+
+  .msg-name {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+
+  .msg.moritz .msg-name { color: var(--green); }
+  .msg.user   .msg-name { color: var(--blue); text-align: right; }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .msg.moritz .msg-bubble {
+    background: #0f1c2e;
+    border: 1px solid rgba(59,130,246,0.15);
+    color: var(--text);
+    border-radius: 4px 12px 12px 12px;
+  }
+
+  .msg.user .msg-bubble {
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: var(--text);
+    border-radius: 12px 4px 12px 12px;
+  }
+
+  .msg-bubble.thinking { color: var(--muted); font-style: italic; }
+
+  .input-bar {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px 14px;
+    flex-shrink: 0;
+  }
+
+  #chat-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 13px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  #chat-input::placeholder { color: var(--muted); }
+  #chat-input:focus { border-color: rgba(59,130,246,0.4); }
+
+  #chat-send {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, opacity 0.15s;
+  }
+
+  #chat-send:hover    { background: #2563eb; }
+  #chat-send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Status bar ───────────────────────────────── */
   .status-bar {
     display: flex;
     align-items: center;
@@ -55,26 +304,23 @@
     color: var(--muted);
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
+
   .status-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--green);
     flex-shrink: 0;
-    animation: pulse 2.5s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-    50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+    animation: dot-pulse 2.5s ease-in-out infinite;
   }
 
-  /* ── Hero ───────────────────────────────────── */
+  /* ── Hero ─────────────────────────────────────── */
   .hero { margin-bottom: 20px; }
 
   .wordmark {
     font-family: var(--font-mono);
-    font-size: clamp(52px, 10vw, 80px);
+    font-size: clamp(44px, 7vw, 68px);
     font-weight: 800;
     letter-spacing: -2px;
     line-height: 1;
@@ -83,21 +329,17 @@
   }
 
   .tagline {
-    font-size: clamp(16px, 2.8vw, 20px);
+    font-size: clamp(15px, 2vw, 18px);
     color: var(--dim);
     font-weight: 400;
-    max-width: 460px;
+    max-width: 400px;
     line-height: 1.55;
   }
-  .tagline strong {
-    color: var(--text);
-    font-weight: 600;
-  }
 
-  /* ── CTA ────────────────────────────────────── */
-  .cta-wrap {
-    margin: 22px 0 28px;
-  }
+  .tagline strong { color: var(--text); font-weight: 600; }
+
+  /* ── CTA ──────────────────────────────────────── */
+  .cta-wrap { margin: 20px 0 24px; }
 
   #meet-btn {
     display: inline-flex;
@@ -106,412 +348,250 @@
     background: var(--blue);
     border: none;
     border-radius: 10px;
-    padding: 15px 28px;
+    padding: 13px 26px;
     color: #fff;
     font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 600;
-    letter-spacing: 0.2px;
     cursor: pointer;
     transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
-    box-shadow: 0 0 0 0 rgba(59,130,246,0.4);
   }
+
   #meet-btn:hover {
     background: #2563eb;
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(59,130,246,0.25);
   }
+
   #meet-btn:active { transform: translateY(0); }
-  #meet-btn .arrow {
-    font-size: 17px;
-    transition: transform 0.18s;
-  }
+
+  #meet-btn .arrow { font-size: 17px; transition: transform 0.18s; }
   #meet-btn:hover .arrow { transform: translateX(4px); }
 
   .cta-hint {
-    margin-top: 10px;
+    margin-top: 9px;
     font-size: 12px;
     color: var(--muted);
-    padding-left: 2px;
   }
 
-  /* ── Live Pulse ─────────────────────────────── */
+  /* ── Pulse bar ────────────────────────────────── */
   .pulse-bar {
     display: flex;
-    align-items: center;
-    gap: 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 0;
-    margin-bottom: 28px;
     overflow: hidden;
+    margin-bottom: 22px;
     transition: border-color 0.4s;
   }
-  .pulse-bar.live { border-color: rgba(34,197,94,0.25); }
+
+  .pulse-bar.live { border-color: rgba(34,197,94,0.2); }
 
   .pulse-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    padding: 16px 24px;
+    padding: 13px 18px;
     flex: 1;
   }
-  .pulse-stat + .pulse-stat {
-    border-left: 1px solid var(--border);
-  }
+
+  .pulse-stat + .pulse-stat { border-left: 1px solid var(--border); }
+
   .pulse-val {
     font-family: var(--font-mono);
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 700;
-    color: var(--text);
     line-height: 1;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.3px;
   }
+
   .pulse-val.green  { color: var(--green); }
   .pulse-val.blue   { color: var(--blue); }
   .pulse-val.purple { color: var(--purple); }
+
   .pulse-lbl {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     text-align: center;
   }
 
-  /* ── Divider ────────────────────────────────── */
+  /* ── About / footer ───────────────────────────── */
   .divider {
     border: none;
     border-top: 1px solid var(--border);
-    margin: 0 0 24px;
+    margin: 0 0 20px;
   }
 
-  /* ── About ──────────────────────────────────── */
   .about {
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.85;
-    margin-bottom: 0;
-    max-width: 560px;
+    max-width: 480px;
   }
+
   .about strong { color: var(--dim); font-weight: 600; }
 
-  /* ── Footer ─────────────────────────────────── */
   footer {
-    margin-top: 36px;
+    margin-top: 26px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .footer-sep { opacity: 0.3; }
-  .footer-link {
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.15s;
-  }
-  .footer-link:hover { color: var(--dim); }
-
-  /* ── Chat Drawer ────────────────────────────── */
-  #chat-drawer {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 0;
-    overflow: hidden;
-    z-index: 100;
-    transition: height 0.36s cubic-bezier(0.32, 0, 0.12, 1);
-  }
-  #chat-drawer.open { height: min(680px, 95vh); }
-
-  .drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(8, 11, 16, 0.75);
-    z-index: 99;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s;
-  }
-  .drawer-backdrop.show { opacity: 1; pointer-events: all; }
-
-  .drawer-inner {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: #0b1018;
-    border-top: 1px solid rgba(59,130,246,0.22);
-    border-radius: 16px 16px 0 0;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
-  .drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px 12px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .drawer-title {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .drawer-title-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse 2.5s infinite;
-  }
-  .drawer-title-sub {
+    gap: 12px;
     font-size: 11px;
     color: var(--muted);
-    font-weight: 400;
-    margin-left: 2px;
-  }
-  .drawer-close {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .drawer-close:hover {
-    background: rgba(239,68,68,0.1);
-    color: #ef4444;
-    border-color: rgba(239,68,68,0.3);
+    flex-wrap: wrap;
   }
 
-  /* ── Avatar ─────────────────────────────────── */
-  .avatar-wrap {
-    height: 170px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(ellipse at 50% 60%, rgba(59,130,246,0.05) 0%, transparent 68%);
-    border-bottom: 1px solid rgba(59,130,246,0.07);
-    overflow: hidden;
-    position: relative;
-  }
-  #moritz-canvas {
-    display: block;
-    opacity: 0.72;
-    image-rendering: pixelated;
-  }
-  /* subtle scanline overlay */
-  .avatar-wrap::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(0,0,0,0.06) 3px,
-      rgba(0,0,0,0.06) 4px
-    );
-    pointer-events: none;
+  .footer-sep { opacity: 0.3; }
+
+  /* ── Chat mode body alignment ────────────────── */
+  body:has(.page-wrap.chat-mode) {
+    align-items: flex-start;
+    padding-top: 20px;
   }
 
-  /* ── Messages ───────────────────────────────── */
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    scroll-behavior: smooth;
+  /* Canvas shrinks in chat mode so face + chat fit without scrolling */
+  .page-wrap.chat-mode #moritz-canvas {
+    max-height: 40vh;
+    width: auto;
+    max-width: 90%;
   }
-  #messages::-webkit-scrollbar { width: 3px; }
-  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .msg {
-    display: flex;
-    flex-direction: column;
-    max-width: 80%;
-    animation: msgIn 0.2s ease;
+  /* Cap chat section so total layout fits viewport */
+  .page-wrap.chat-mode .chat-section {
+    max-height: min(36vh, 340px);
   }
-  @keyframes msgIn {
-    from { opacity: 0; transform: translateY(7px); }
-    to   { opacity: 1; transform: none; }
-  }
-  .msg.moritz { align-self: flex-start; }
-  .msg.user   { align-self: flex-end; }
 
-  .msg-name {
-    font-size: 10px;
-    font-family: var(--font-mono);
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    padding: 0 4px;
-  }
-  .msg.moritz .msg-name { color: var(--green); }
-  .msg.user   .msg-name { color: var(--blue); text-align: right; }
+  /* ── Mobile ───────────────────────────────────── */
+  @media (max-width: 767px) {
+    body { padding: 20px 16px; align-items: flex-start; }
 
-  .msg-bubble {
-    padding: 11px 15px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.6;
-    font-family: var(--font-sans);
-  }
-  .msg.moritz .msg-bubble {
-    background: #121c2e;
-    border: 1px solid rgba(59,130,246,0.15);
-    color: var(--text);
-    border-radius: 4px 12px 12px 12px;
-  }
-  .msg.user .msg-bubble {
-    background: rgba(59,130,246,0.14);
-    border: 1px solid rgba(59,130,246,0.22);
-    color: var(--text);
-    border-radius: 12px 4px 12px 12px;
-  }
-  .msg-bubble.thinking { color: var(--muted); font-style: italic; }
+    .page-wrap {
+      flex-direction: column-reverse;
+      gap: 24px;
+      max-width: 480px;
+      margin: 0 auto;
+      align-items: center;
+    }
 
-  /* ── Input bar ──────────────────────────────── */
-  .input-bar {
-    display: flex;
-    gap: 10px;
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    background: #0b1018;
-  }
-  #chat-input {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  #chat-input::placeholder { color: var(--muted); }
-  #chat-input:focus { border-color: rgba(59,130,246,0.4); }
+    .content-panel {
+      flex: 0 0 auto;
+      max-width: 100%;
+      width: 100%;
+      max-height: 1200px;
+      transition: opacity 0.3s ease, max-height 0.5s ease;
+    }
 
-  #chat-send {
-    background: var(--blue);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-    flex-shrink: 0;
-    align-self: flex-end;
-  }
-  #chat-send:hover    { background: #2563eb; }
-  #chat-send:disabled { opacity: 0.35; cursor: not-allowed; }
+    .face-panel {
+      flex: 0 0 auto;
+      width: 100%;
+    }
 
-  /* ── Mobile ─────────────────────────────────── */
-  @media (max-width: 480px) {
-    .pulse-stat { padding: 14px 16px; }
-    .pulse-val  { font-size: 18px; }
-    .avatar-wrap { height: 140px; }
-    #chat-drawer.open { height: min(640px, 95vh); }
+    #moritz-canvas { max-width: 280px; }
+
+    .page-wrap.chat-mode {
+      gap: 0;
+      max-width: 100%;
+    }
+
+    .page-wrap.chat-mode .content-panel {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .page-wrap.chat-mode .face-panel {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .page-wrap.chat-mode #moritz-canvas { max-width: 100%; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="status-bar">
-    <span class="status-dot"></span>
-    <span id="status-text">Online</span>
-  </div>
+<div class="page-wrap" id="page">
 
-  <div class="hero">
-    <div class="wordmark">Moritz</div>
-    <div class="tagline">Your technology, <strong>always on.</strong><br>Moritz watches everything so you don't have to.</div>
-  </div>
-
-  <div class="cta-wrap">
-    <button id="meet-btn" onclick="openChat()">
-      Meet Moritz <span class="arrow">→</span>
-    </button>
-    <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
-  </div>
-
-  <div id="pulse-bar" class="pulse-bar">
-    <div class="pulse-stat">
-      <span class="pulse-val green" id="p-nodes">—</span>
-      <span class="pulse-lbl">Systems running</span>
+  <!-- Left: landing content -->
+  <div class="content-panel" id="content-panel">
+    <div class="status-bar">
+      <span class="status-dot"></span>
+      <span id="status-text">Online</span>
     </div>
-    <div class="pulse-stat">
-      <span class="pulse-val blue" id="p-svc">—</span>
-      <span class="pulse-lbl">Active services</span>
+
+    <div class="hero">
+      <div class="wordmark">Moritz</div>
+      <div class="tagline">Your technology, <strong>always on.</strong><br>Moritz watches everything so you don't have to.</div>
     </div>
-    <div class="pulse-stat">
-      <span class="pulse-val purple" id="p-vram">—</span>
-      <span class="pulse-lbl">AI inference</span>
+
+    <div class="cta-wrap">
+      <button id="meet-btn" onclick="openChat()">
+        Meet Moritz <span class="arrow">→</span>
+      </button>
+      <div class="cta-hint">He'll introduce himself — takes about 2 minutes</div>
     </div>
-  </div>
 
-  <hr class="divider">
-
-  <p class="about">
-    Most technology fails because no one is watching. <strong>Moritz watches.</strong>
-    He runs on a private distributed platform, monitors every system, reasons about what matters,
-    and acts — without waking anyone up unless he has to.
-    He learns from every outcome and gets better at the job over time.
-    The people who rely on him don't need to understand technology.
-    <strong>That's the point.</strong>
-  </p>
-
-  <footer>
-    <span>Built by one person, for everything that shouldn't fail</span>
-    <span class="footer-sep">·</span>
-    <span>Private. Distributed. Not for sale — yet.</span>
-  </footer>
-
-</div>
-
-<!-- Backdrop -->
-<div class="drawer-backdrop" id="backdrop" onclick="closeChat()"></div>
-
-<!-- Chat Drawer -->
-<div id="chat-drawer">
-  <div class="drawer-inner">
-    <div class="drawer-header">
-      <div class="drawer-title">
-        <div class="drawer-title-dot"></div>
-        Moritz
-        <span class="drawer-title-sub">— he's listening</span>
+    <div id="pulse-bar" class="pulse-bar">
+      <div class="pulse-stat">
+        <span class="pulse-val green" id="p-nodes">—</span>
+        <span class="pulse-lbl">Systems running</span>
       </div>
-      <button class="drawer-close" onclick="closeChat()" title="Close">✕</button>
+      <div class="pulse-stat">
+        <span class="pulse-val blue" id="p-svc">—</span>
+        <span class="pulse-lbl">Active services</span>
+      </div>
+      <div class="pulse-stat">
+        <span class="pulse-val purple" id="p-vram">—</span>
+        <span class="pulse-lbl">AI inference</span>
+      </div>
     </div>
 
-    <!-- Pixel avatar -->
-    <div class="avatar-wrap">
-      <canvas id="moritz-canvas" width="280" height="160"></canvas>
+    <hr class="divider">
+
+    <p class="about">
+      Most technology fails because no one is watching. <strong>Moritz watches.</strong>
+      He runs on a private distributed platform, monitors every system, reasons about what matters,
+      and acts — without waking anyone up unless he has to.
+      He learns from every outcome and gets better at the job over time.
+      The people who rely on him don't need to understand technology.
+      <strong>That's the point.</strong>
+    </p>
+
+    <footer>
+      <span>Built by one person, for everything that shouldn't fail</span>
+      <span class="footer-sep">·</span>
+      <span>Private. Distributed. Not for sale — yet.</span>
+    </footer>
+  </div>
+
+  <!-- Right: face + chat -->
+  <div class="face-panel" id="face-panel">
+
+    <div class="face-header" id="face-header">
+      <div class="face-title">
+        <span class="face-dot"></span>
+        Moritz
+        <span class="face-sub">— he's listening</span>
+      </div>
+      <button class="face-close" onclick="closeChat()" title="Close">✕</button>
     </div>
 
-    <div id="messages"></div>
-    <div class="input-bar">
-      <input id="chat-input" type="text" placeholder="Say something…" maxlength="400" autocomplete="off" spellcheck="false">
-      <button id="chat-send" onclick="sendMsg()">Send</button>
+    <div class="canvas-wrap">
+      <canvas id="moritz-canvas" width="400" height="480" onclick="openChat()" title="Click to meet Moritz"></canvas>
     </div>
+
+    <div class="chat-section" id="chat-section">
+      <div id="messages"></div>
+      <div class="input-bar">
+        <input id="chat-input" type="text" placeholder="Say something…" maxlength="400" autocomplete="off" spellcheck="false">
+        <button id="chat-send" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -536,136 +616,429 @@ async function fetchPulse() {
 fetchPulse();
 setInterval(fetchPulse, 10000);
 
-// ── Moritz Avatar ─────────────────────────────────────────────────────────────
-class MoritzAvatar {
+// ── Moritz Face ───────────────────────────────────────────────────────────────
+class MoritzFace {
   constructor(canvas) {
-    this.cv = canvas;
-    this.cx = canvas.getContext('2d');
-    this.W = canvas.width;
-    this.H = canvas.height;
-    this.talking = false;
-    this.t = 0;
-    this.ps = [];
+    this.cv  = canvas;
+    this.ctx = canvas.getContext('2d');
+    // Logical canvas size — CSS scales it
+    this.W   = 400;
+    this.H   = 480;
+    // Face center in logical coords
+    this.cx  = 200;
+    this.cy  = 205;
+
+    this.talking    = false;
+    this.t          = 0;
+    this.mouthOpen  = 0;
+
+    // Blink state
+    this.blinkT     = 0;
+    this.nextBlink  = 2.5 + Math.random() * 3.5;
+    this.blinking   = false;
+    this.blinkProg  = 0;
+
+    // Eye look-around
+    this.lookX      = 0;
+    this.lookY      = 0;
+    this.targetLX   = 0;
+    this.targetLY   = 0;
+    this.lookT      = 0;
+    this.nextLook   = 2 + Math.random() * 4;
+
     this._dead = false;
-    this._build();
-    this._frame();
+    this._tick();
   }
 
-  _build() {
-    const cx = this.W / 2, cy = this.H / 2 + 6;
-    const add = (x, y, type) => this.ps.push({
-      x: cx + (Math.random() - 0.5) * 60,
-      y: cy + (Math.random() - 0.5) * 60,
-      tx: x, ty: y, type,
-      vx: 0, vy: 0,
-      ph: Math.random() * Math.PI * 2,
-      sp: 0.3 + Math.random() * 0.7
-    });
-
-    // Head oval outline
-    for (let a = 0; a < Math.PI * 2; a += 0.095) {
-      add(cx + Math.cos(a) * 62, cy + Math.sin(a) * 72, 'head');
-    }
-    // Left eye ring
-    for (let a = 0; a < Math.PI * 2; a += 0.42) {
-      add(cx - 24 + Math.cos(a) * 11, cy - 20 + Math.sin(a) * 8, 'eye');
-    }
-    // Right eye ring
-    for (let a = 0; a < Math.PI * 2; a += 0.42) {
-      add(cx + 24 + Math.cos(a) * 11, cy - 20 + Math.sin(a) * 8, 'eye');
-    }
-    // Pupils (bright centers)
-    add(cx - 24, cy - 20, 'pupil');
-    add(cx - 23, cy - 21, 'pupil');
-    add(cx + 24, cy - 20, 'pupil');
-    add(cx + 25, cy - 21, 'pupil');
-    // Mouth arc (slight neutral curve)
-    for (let a = Math.PI * 0.18; a < Math.PI * 0.82; a += 0.14) {
-      add(cx + Math.cos(a + Math.PI) * 28, cy + 34 + Math.sin(a + Math.PI) * -10, 'mouth');
-    }
-    // Ambient digital noise
-    for (let i = 0; i < 14; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 28 + Math.random() * 38;
-      add(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 1.1, 'noise');
-    }
-  }
-
-  _frame() {
+  _tick() {
     if (this._dead) return;
-    this.t += 0.016;
-    const t = this.t;
-    const ctx = this.cx;
+    const dt = 0.016;
+    this.t      += dt;
+    this.blinkT += dt;
+    this.lookT  += dt;
+
+    // Blink
+    if (!this.blinking && this.blinkT >= this.nextBlink) {
+      this.blinking  = true;
+      this.blinkProg = 0;
+      this.blinkT    = 0;
+      this.nextBlink = 2.5 + Math.random() * 4;
+    }
+    if (this.blinking) {
+      this.blinkProg += dt * 9;
+      if (this.blinkProg >= 2) { this.blinking = false; this.blinkProg = 0; }
+    }
+
+    // Look around
+    if (this.lookT >= this.nextLook) {
+      this.targetLX  = (Math.random() - 0.5) * 1.6;
+      this.targetLY  = (Math.random() - 0.5) * 0.9;
+      this.nextLook  = 2 + Math.random() * 5;
+      this.lookT     = 0;
+    }
+    this.lookX += (this.targetLX - this.lookX) * 0.04;
+    this.lookY += (this.targetLY - this.lookY) * 0.04;
+
+    // Mouth
+    if (this.talking) {
+      const target = 0.35 + Math.abs(Math.sin(this.t * 14)) * 0.45 + Math.random() * 0.2;
+      this.mouthOpen += (Math.min(1, target) - this.mouthOpen) * 0.28;
+    } else {
+      this.mouthOpen *= 0.86;
+    }
+
+    this._draw();
+    requestAnimationFrame(() => this._tick());
+  }
+
+  _draw() {
+    const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
 
-    for (const p of this.ps) {
-      // Organic drift
-      let tx = p.tx + Math.sin(t * p.sp + p.ph) * 1.6;
-      let ty = p.ty + Math.cos(t * p.sp * 0.78 + p.ph + 1.4) * 1.6;
+    // Idle float
+    const fy = Math.sin(this.t * 0.65) * 4.5;
+    const fx = Math.sin(this.t * 0.38) * 1.8;
 
-      if (this.talking) {
-        if (p.type === 'mouth') {
-          ty += Math.sin(t * 13 + p.ph * 2.8) * 4.5;
-          tx += Math.cos(t * 8.5 + p.ph) * 1.4;
-        }
-        if (p.type === 'pupil') {
-          // subtle flicker on pupils while talking
-          if (Math.sin(t * 22 + p.ph) > 0.85) { tx += (Math.random() - 0.5) * 2; }
-        }
-        p.vx += (Math.random() - 0.5) * 0.22;
-        p.vy += (Math.random() - 0.5) * 0.22;
-      }
+    ctx.save();
+    ctx.translate(this.cx + fx, this.cy + fy);
 
-      // Spring toward target
-      p.vx += (tx - p.x) * 0.052;
-      p.vy += (ty - p.y) * 0.052;
-      p.vx *= 0.84;
-      p.vy *= 0.84;
-      p.x += p.vx;
-      p.y += p.vy;
+    this._shoulders(ctx);
+    this._neck(ctx);
+    this._headFill(ctx);
+    this._circuits(ctx);
+    this._eyebrows(ctx);
+    this._eyes(ctx);
+    this._nose(ctx);
+    this._mouth(ctx);
+    this._headEdge(ctx);
 
-      // Per-type color and alpha
-      let alpha, r, g, b;
-      switch (p.type) {
-        case 'pupil':
-          alpha = this.talking
-            ? 0.82 + Math.sin(t * 18 + p.ph) * 0.18
-            : 0.55 + Math.sin(t * 1.6 + p.ph) * 0.12;
-          r = 160; g = 230; b = 255; break;
-        case 'eye':
-          alpha = 0.32 + Math.sin(t * 1.4 + p.ph) * 0.08;
-          r = 80; g = 185; b = 255; break;
-        case 'mouth':
-          alpha = this.talking
-            ? 0.52 + Math.abs(Math.sin(t * 11 + p.ph)) * 0.22
-            : 0.26 + Math.sin(t * 1.1 + p.ph) * 0.07;
-          r = 90; g = 190; b = 255; break;
-        case 'noise':
-          alpha = (this.talking ? 0.16 : 0.06) + Math.abs(Math.sin(t * 4.2 + p.ph)) * 0.05;
-          r = 55; g = 145; b = 255; break;
-        default: // head
-          alpha = (this.talking ? 0.44 : 0.24) + Math.sin(t * 1.2 + p.ph) * 0.07;
-          r = 88; g = 182; b = 255;
-      }
+    ctx.restore();
+  }
 
-      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-      ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y) - 1, 2, 2);
+  _shoulders(ctx) {
+    // Shoulder silhouette below neck
+    const sg = ctx.createRadialGradient(0, 200, 0, 0, 200, 200);
+    sg.addColorStop(0, '#101e2e');
+    sg.addColorStop(0.55, '#0b1520');
+    sg.addColorStop(1, 'rgba(8,11,16,0)');
+    ctx.beginPath();
+    ctx.ellipse(0, 218, 185, 65, 0, 0, Math.PI * 2);
+    ctx.fillStyle = sg;
+    ctx.fill();
+  }
+
+  _neck(ctx) {
+    const nw = 34;
+    const ny0 = 148;
+    const ny1 = 210;
+    const ng = ctx.createLinearGradient(-nw, ny0, nw, ny1);
+    ng.addColorStop(0, '#131f30');
+    ng.addColorStop(1, '#0b1420');
+    ctx.beginPath();
+    ctx.moveTo(-nw, ny0);
+    ctx.lineTo(nw, ny0);
+    ctx.lineTo(nw * 1.7, ny1);
+    ctx.lineTo(-nw * 1.7, ny1);
+    ctx.closePath();
+    ctx.fillStyle = ng;
+    ctx.fill();
+  }
+
+  _headFill(ctx) {
+    const hw = 118, hh = 150;
+
+    // Outer ambient glow
+    const og = ctx.createRadialGradient(0, -10, 60, 0, -10, 220);
+    og.addColorStop(0, 'rgba(59,130,246,0)');
+    og.addColorStop(0.72, 'rgba(59,130,246,0.025)');
+    og.addColorStop(1,    'rgba(59,130,246,0.07)');
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 200, 230, 0, 0, Math.PI * 2);
+    ctx.fillStyle = og;
+    ctx.fill();
+
+    // Face skin
+    const fg = ctx.createRadialGradient(-25, -50, 0, 0, 0, Math.max(hw, hh) * 1.1);
+    fg.addColorStop(0,    '#233047');
+    fg.addColorStop(0.35, '#192638');
+    fg.addColorStop(0.65, '#0f1a28');
+    fg.addColorStop(1,    '#080d14');
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.fillStyle = fg;
+    ctx.fill();
+
+    // Subtle top highlight (brow bone)
+    const tg = ctx.createRadialGradient(-30, -80, 0, -30, -80, 120);
+    tg.addColorStop(0, 'rgba(120,180,255,0.07)');
+    tg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.fillStyle = tg;
+    ctx.fill();
+  }
+
+  _headEdge(ctx) {
+    const hw = 118, hh = 150;
+    // Blue edge glow
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(59,130,246,0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Inner edge softening
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw - 3, hh - 3, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(59,130,246,0.06)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  _circuits(ctx) {
+    const hw = 118, hh = 150;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.clip();
+
+    ctx.strokeStyle = 'rgba(59,130,246,0.09)';
+    ctx.lineWidth = 0.7;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Right cheek branch
+    ctx.beginPath();
+    ctx.moveTo(72, -28); ctx.lineTo(96, -14); ctx.lineTo(100, 22); ctx.lineTo(82, 55);
+    ctx.stroke();
+    // Left cheek branch
+    ctx.beginPath();
+    ctx.moveTo(-72, -28); ctx.lineTo(-96, -14); ctx.lineTo(-100, 22); ctx.lineTo(-82, 55);
+    ctx.stroke();
+    // Forehead branch
+    ctx.beginPath();
+    ctx.moveTo(-28, -118); ctx.lineTo(-28, -94); ctx.lineTo(18, -94); ctx.lineTo(18, -82);
+    ctx.stroke();
+    // Chin branch
+    ctx.beginPath();
+    ctx.moveTo(-18, 125); ctx.lineTo(-18, 108); ctx.lineTo(18, 108); ctx.lineTo(18, 125);
+    ctx.stroke();
+    // Temple right
+    ctx.beginPath();
+    ctx.moveTo(96, -60); ctx.lineTo(82, -52); ctx.lineTo(82, -36);
+    ctx.stroke();
+
+    // Circuit nodes
+    ctx.fillStyle = 'rgba(59,130,246,0.18)';
+    for (const [x,y] of [[72,-28],[96,-14],[100,22],[82,55],[-72,-28],[-96,-14],[-100,22],[-82,55],[-28,-118],[18,-82],[-18,125],[18,125],[96,-60],[82,-36]]) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.8, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    requestAnimationFrame(() => this._frame());
+    ctx.restore();
+  }
+
+  _eyebrows(ctx) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(150,200,255,0.45)';
+    ctx.lineWidth   = 2.2;
+    ctx.lineCap     = 'round';
+    // Left brow
+    ctx.beginPath();
+    ctx.moveTo(-66, -67); ctx.quadraticCurveTo(-44, -76, -22, -72);
+    ctx.stroke();
+    // Right brow
+    ctx.beginPath();
+    ctx.moveTo(22, -72); ctx.quadraticCurveTo(44, -76, 66, -67);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  _eyes(ctx) {
+    const ba = this.blinking
+      ? Math.min(1, this.blinkProg < 1 ? this.blinkProg : 2 - this.blinkProg)
+      : 0;
+    this._eye(ctx, -44, -38, ba);
+    this._eye(ctx, 44,  -38, ba);
+  }
+
+  _eye(ctx, ex, ey, blinkAmt) {
+    const ew = 21, eh = 13.5;
+    const lx = this.lookX * 4.5;
+    const ly = this.lookY * 3;
+
+    // Eye socket shadow
+    const ss = ctx.createRadialGradient(ex, ey, 0, ex, ey, ew * 1.6);
+    ss.addColorStop(0, 'rgba(0,5,15,0.55)');
+    ss.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ss;
+    ctx.fillRect(ex - ew * 1.7, ey - eh * 1.7, ew * 3.4, eh * 3.4);
+
+    // Eye surround (very dark, not white)
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#04090f';
+    ctx.fill();
+    ctx.restore();
+
+    // Iris glow halo (clipped to eye)
+    const gr = 18;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.clip();
+    const ig = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, gr);
+    ig.addColorStop(0,   'rgba(80,160,255,0.45)');
+    ig.addColorStop(0.5, 'rgba(59,130,246,0.14)');
+    ig.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = ig;
+    ctx.fillRect(ex - gr, ey - gr, gr * 2, gr * 2);
+    ctx.restore();
+
+    // Iris
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.clip();
+    const irg = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, 11);
+    irg.addColorStop(0,    '#a8d4ff');
+    irg.addColorStop(0.28, '#3b82f6');
+    irg.addColorStop(0.62, '#1d4ed8');
+    irg.addColorStop(1,    '#162d60');
+    ctx.beginPath();
+    ctx.arc(ex + lx, ey + ly, 11, 0, Math.PI * 2);
+    ctx.fillStyle = irg;
+    ctx.fill();
+    ctx.restore();
+
+    // Pupil
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.arc(ex + lx, ey + ly, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#010308';
+    ctx.fill();
+    ctx.restore();
+
+    // Catchlights
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.clip();
+    // Main catchlight
+    ctx.beginPath();
+    ctx.arc(ex + lx + 3.5, ey + ly - 3, 2.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(215,240,255,0.95)';
+    ctx.fill();
+    // Secondary
+    ctx.beginPath();
+    ctx.arc(ex + lx - 2.2, ey + ly + 3.2, 1.1, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(180,220,255,0.5)';
+    ctx.fill();
+    ctx.restore();
+
+    // Eye outline
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(100,165,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Blink eyelid
+    if (blinkAmt > 0.02) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, ew + 1, eh + 1, 0, 0, Math.PI * 2);
+      ctx.clip();
+      // Upper lid sweeps down
+      const lidH = (eh * 2 + 2) * blinkAmt;
+      ctx.fillStyle = '#111d2c';
+      ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, lidH + 1);
+      ctx.restore();
+    }
+  }
+
+  _nose(ctx) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,160,220,0.18)';
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    // Bridge curves
+    ctx.beginPath();
+    ctx.moveTo(0, -12); ctx.quadraticCurveTo(9, 14, 7, 36);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -12); ctx.quadraticCurveTo(-9, 14, -7, 36);
+    ctx.stroke();
+    // Nostrils
+    ctx.fillStyle = 'rgba(20,45,80,0.45)';
+    ctx.beginPath(); ctx.ellipse(-10, 40, 4, 3, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 10, 40, 4, 3,  0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  _mouth(ctx) {
+    const my = 78;
+    const mw = 33;
+    const op = this.mouthOpen * 15;
+
+    ctx.save();
+
+    if (op > 1) {
+      // Open mouth cavity
+      ctx.beginPath();
+      ctx.moveTo(-mw * 0.88, my);
+      ctx.bezierCurveTo(-mw * 0.45, my + 3, mw * 0.45, my + 3, mw * 0.88, my);
+      ctx.bezierCurveTo( mw * 0.45, my + op + 5, -mw * 0.45, my + op + 5, -mw * 0.88, my);
+      ctx.closePath();
+      const mg = ctx.createLinearGradient(0, my, 0, my + op + 5);
+      mg.addColorStop(0,   'rgba(15,40,90,0.92)');
+      mg.addColorStop(0.5, 'rgba(8,22,55,0.75)');
+      mg.addColorStop(1,   'rgba(4,10,25,0.5)');
+      ctx.fillStyle = mg;
+      ctx.fill();
+      // Teeth hint
+      ctx.fillStyle = 'rgba(170,210,245,0.12)';
+      ctx.fillRect(-mw * 0.55, my + 1, mw * 1.1, Math.min(op * 0.38, 4.5));
+    }
+
+    // Upper lip
+    ctx.beginPath();
+    ctx.moveTo(-mw, my);
+    ctx.bezierCurveTo(-mw * 0.5, my - 5,  -mw * 0.15, my - op * 0.45, 0, my - op * 0.52);
+    ctx.bezierCurveTo( mw * 0.15, my - op * 0.45,  mw * 0.5, my - 5,  mw, my);
+    ctx.strokeStyle = 'rgba(120,185,255,0.68)';
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Lower lip
+    ctx.beginPath();
+    ctx.moveTo(-mw * 0.82, my + 1.5);
+    ctx.bezierCurveTo(-mw * 0.38, my + op + 7, mw * 0.38, my + op + 7, mw * 0.82, my + 1.5);
+    ctx.strokeStyle = 'rgba(90,155,240,0.52)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   setTalking(v) { this.talking = v; }
   destroy()     { this._dead = true; }
 }
 
-let _avatar = null;
+// ── Init avatar ───────────────────────────────────────────────────────────────
+let _face = null;
 
-function initAvatar() {
-  if (_avatar) return;
+(function initFace() {
   const cv = document.getElementById('moritz-canvas');
-  if (cv) _avatar = new MoritzAvatar(cv);
-}
+  if (cv) _face = new MoritzFace(cv);
+})();
 
 // ── TTS ───────────────────────────────────────────────────────────────────────
 let voices = [];
@@ -683,9 +1056,9 @@ function speak(text) {
                  || voices.find(v => /en[-_]US/i.test(v.lang))
                  || voices[0];
   if (preferred) utt.voice = preferred;
-  utt.onstart = () => { if (_avatar) _avatar.setTalking(true); };
-  utt.onend   = () => { if (_avatar) _avatar.setTalking(false); };
-  utt.onerror = () => { if (_avatar) _avatar.setTalking(false); };
+  utt.onstart = () => { if (_face) _face.setTalking(true); };
+  utt.onend   = () => { if (_face) _face.setTalking(false); };
+  utt.onerror = () => { if (_face) _face.setTalking(false); };
   window.speechSynthesis.speak(utt);
 }
 
@@ -697,24 +1070,32 @@ let intents   = [];
 let busy      = false;
 let ended     = false;
 let geoData   = null;
+let chatOpen  = false;
 
-// ── Drawer ────────────────────────────────────────────────────────────────────
+// ── Chat open / close ─────────────────────────────────────────────────────────
 function openChat() {
-  document.getElementById('chat-drawer').classList.add('open');
-  document.getElementById('backdrop').classList.add('show');
-  document.getElementById('chat-input').focus();
-  initAvatar();
+  if (chatOpen) return;
+  chatOpen = true;
+  document.getElementById('page').classList.add('chat-mode');
+  // Remove click-to-open from canvas
+  document.getElementById('moritz-canvas').style.cursor = 'default';
+  document.getElementById('moritz-canvas').onclick = null;
+  // Focus input after transition
+  setTimeout(() => document.getElementById('chat-input').focus(), 520);
   if (messages.length === 0) startConversation();
 }
 
 function closeChat() {
+  if (!chatOpen) return;
+  chatOpen = false;
   window.speechSynthesis.cancel();
-  if (_avatar) _avatar.setTalking(false);
-  document.getElementById('chat-drawer').classList.remove('open');
-  document.getElementById('backdrop').classList.remove('show');
+  if (_face) _face.setTalking(false);
+  document.getElementById('page').classList.remove('chat-mode');
+  document.getElementById('moritz-canvas').style.cursor = 'pointer';
+  document.getElementById('moritz-canvas').onclick = openChat;
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeChat(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && chatOpen) closeChat(); });
 document.getElementById('chat-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
@@ -724,8 +1105,8 @@ function addMsg(role, text, thinking) {
   const wrap = document.getElementById('messages');
   const div  = document.createElement('div');
   div.className = 'msg ' + role;
-  const name   = role === 'moritz' ? 'Moritz' : 'You';
-  div.innerHTML = `<div class="msg-name">${name}</div><div class="msg-bubble${thinking?' thinking':''}">${esc(text)}</div>`;
+  const name = role === 'moritz' ? 'Moritz' : 'You';
+  div.innerHTML = `<div class="msg-name">${name}</div><div class="msg-bubble${thinking ? ' thinking' : ''}">${esc(text)}</div>`;
   div.dataset.thinking = thinking ? '1' : '';
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
@@ -745,8 +1126,11 @@ function esc(s) {
 async function startConversation() {
   const opener = "Hi, I'm Moritz. What's your name?";
   messages.push({ role: 'assistant', content: opener });
-  addMsg('moritz', opener);
-  speak(opener);
+  // Small delay so the chat section is visible before the message appears
+  setTimeout(() => {
+    addMsg('moritz', opener);
+    speak(opener);
+  }, 400);
 }
 
 async function sendMsg() {
@@ -816,17 +1200,16 @@ function collectPhysical() {
   let referrer = 'direct';
   try { if (document.referrer) referrer = new URL(document.referrer).hostname; } catch {}
   return {
-    device_type:    /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    device_type:        /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
     referrer,
     session_duration_s: Math.round((Date.now() - _sessionStart) / 1000),
-    message_count:  messages.filter(m => m.role === 'user').length,
-    language:       navigator.language || 'unknown',
-    viewport:       window.innerWidth + 'x' + window.innerHeight,
-    timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+    message_count:      messages.filter(m => m.role === 'user').length,
+    language:           navigator.language || 'unknown',
+    viewport:           window.innerWidth + 'x' + window.innerHeight,
+    timezone:           Intl.DateTimeFormat().resolvedOptions().timeZone || '',
   };
 }
 
-// ── Inference call (fire-and-forget, runs while TTS plays goodbye) ─────────────
 async function analyzeConversation() {
   try {
     const res = await fetch(BRAIN + '/analyze', {
@@ -840,20 +1223,15 @@ async function analyzeConversation() {
   } catch { return null; }
 }
 
-// ── Log conversation with full profile ────────────────────────────────────────
 async function logConversation() {
   const physical = collectPhysical();
-  // Run inference in parallel — TTS goodbye buys us 3–5s, plenty of time
   const [inferResult] = await Promise.allSettled([analyzeConversation()]);
   const inferred = inferResult.status === 'fulfilled' ? inferResult.value : null;
   try {
     await fetch(BRAIN + '/chat-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: userName, email: userEmail, intents, messages, geo: geoData,
-        physical, inferred
-      }),
+      body: JSON.stringify({ name: userName, email: userEmail, intents, messages, geo: geoData, physical, inferred }),
     });
   } catch { /* best-effort */ }
 }
