@@ -560,47 +560,89 @@ async function fetchPulse() {
 fetchPulse();
 setInterval(fetchPulse, 10000);
 
-// ── Moritz Face — speaking mask ────────────────────────────────
+// ── Moritz Face — low-poly mesh ────────────────────────────────
 class MoritzFace {
   constructor(canvas) {
     this.cv  = canvas;
     this.ctx = canvas.getContext('2d');
-    this.W = 400;
-    this.H = 480;
-    this.cx = 200;
-    this.cy = 200;
+    this.W = 400; this.H = 480;
+    this.cx = 200; this.cy = 195;
 
-    this.talking   = false;
-    this.t         = 0;
-    this.mouthOpen = 0;
+    this.talking   = false; this.t  = 0; this.mouthOpen = 0;
+    this.blinkT    = 0; this.nextBlink = 2 + Math.random() * 4;
+    this.blinking  = false; this.blinkProg = 0;
+    this.lookX     = 0; this.lookY   = 0;
+    this.targetX   = 0; this.targetY = 0;
+    this.lookT     = 0; this.nextLook = 3 + Math.random() * 4;
+    this._dead     = false;
 
-    // Blink
-    this.blinkT    = 0;
-    this.nextBlink = 2 + Math.random() * 4;
-    this.blinking  = false;
-    this.blinkProg = 0;
+    // Base vertices [x, y] relative to face centre
+    this._base = [
+      // 0-11: head outline
+      [0,-150],[-65,-128],[-110,-62],[-118,22],[-92,108],[-38,152],
+      [0,160],[38,152],[92,108],[118,22],[110,-62],[65,-128],
+      // 12-14: forehead
+      [0,-115],[-40,-105],[40,-105],
+      // 15-20: brow / orbital
+      [-18,-80],[18,-80],[-55,-83],[-82,-66],[55,-83],[82,-66],
+      // 21-24: left eye  (22 = top, animates for blink)
+      [-36,-50],[-55,-60],[-74,-50],[-55,-40],
+      // 25-28: right eye (26 = top, animates for blink)
+      [36,-50],[55,-60],[74,-50],[55,-40],
+      // 29-38: mid-face / nose
+      [0,-22],[-44,-15],[44,-15],[-88,8],[88,8],
+      [-50,30],[50,30],[0,36],[-20,43],[20,43],
+      // 39-46: mouth area (44-46 = lower lip, animate for talk)
+      [-28,58],[28,58],[-34,74],[0,70],[34,74],[0,88],[-20,96],[20,96],
+      // 47-50: chin (47 = below-mouth, animates for talk)
+      [0,112],[-48,128],[48,128],[0,146],
+    ];
 
-    // Look-around
-    this.lookX   = 0; this.lookY   = 0;
-    this.targetX = 0; this.targetY = 0;
-    this.lookT   = 0; this.nextLook = 3 + Math.random() * 4;
+    this._blinkIdxL = 22;
+    this._blinkIdxR = 26;
+    this._talkIdx   = [44, 45, 46, 47];
 
-    this._dead = false;
+    this._tris = this._delaunay(this._base);
     this._tick();
+  }
+
+  _delaunay(pts) {
+    const n = pts.length, BIG = 2500;
+    const all = [...pts, [0, -BIG * 1.4], [BIG * 1.6, BIG], [-BIG * 1.6, BIG]];
+    const si = n, sj = n + 1, sk = n + 2;
+    let tris = [[si, sj, sk]];
+    for (let p = 0; p < n; p++) {
+      const bad = tris.filter(t => this._inCirc(all[t[0]], all[t[1]], all[t[2]], all[p]));
+      const poly = [];
+      for (const t of bad) {
+        for (let i = 0; i < 3; i++) {
+          const e0 = t[i], e1 = t[(i + 1) % 3];
+          if (!bad.some(o => o !== t && o.includes(e0) && o.includes(e1)))
+            poly.push([e0, e1]);
+        }
+      }
+      tris = tris.filter(t => !bad.includes(t));
+      for (const [e0, e1] of poly) tris.push([e0, e1, p]);
+    }
+    return tris.filter(t => t[0] < n && t[1] < n && t[2] < n);
+  }
+
+  _inCirc([ax,ay],[bx,by],[cx,cy],[px,py]) {
+    const D = 2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+    if (Math.abs(D) < 1e-10) return false;
+    const a2=ax*ax+ay*ay, b2=bx*bx+by*by, c2=cx*cx+cy*cy;
+    const ux=(a2*(by-cy)+b2*(cy-ay)+c2*(ay-by))/D;
+    const uy=(a2*(cx-bx)+b2*(ax-cx)+c2*(bx-ax))/D;
+    return (px-ux)**2+(py-uy)**2 < (ax-ux)**2+(ay-uy)**2 - 1e-10;
   }
 
   _tick() {
     if (this._dead) return;
     const dt = 0.016;
-    this.t      += dt;
-    this.blinkT += dt;
-    this.lookT  += dt;
+    this.t += dt; this.blinkT += dt; this.lookT += dt;
 
-    // Blink
     if (!this.blinking && this.blinkT >= this.nextBlink) {
-      this.blinking  = true;
-      this.blinkProg = 0;
-      this.blinkT    = 0;
+      this.blinking = true; this.blinkProg = 0; this.blinkT = 0;
       this.nextBlink = 2.5 + Math.random() * 4;
     }
     if (this.blinking) {
@@ -608,17 +650,14 @@ class MoritzFace {
       if (this.blinkProg >= 2) { this.blinking = false; this.blinkProg = 0; }
     }
 
-    // Look-around
     if (this.lookT >= this.nextLook) {
       this.targetX = (Math.random() - 0.5) * 1.6;
       this.targetY = (Math.random() - 0.5) * 0.8;
-      this.nextLook = 2.5 + Math.random() * 5;
-      this.lookT    = 0;
+      this.nextLook = 2.5 + Math.random() * 5; this.lookT = 0;
     }
     this.lookX += (this.targetX - this.lookX) * 0.04;
     this.lookY += (this.targetY - this.lookY) * 0.04;
 
-    // Mouth — naturally irregular when talking
     if (this.talking) {
       const target = 0.3 + Math.abs(Math.sin(this.t * 11)) * 0.4 + Math.abs(Math.sin(this.t * 7.3)) * 0.3;
       this.mouthOpen += (Math.min(1, target) - this.mouthOpen) * 0.25;
@@ -630,403 +669,101 @@ class MoritzFace {
     requestAnimationFrame(() => this._tick());
   }
 
-  // ── Almond-shaped eye path ──────────────────────────────────
-  _eyePath(ctx, ex, ey, ew, eh) {
-    ctx.beginPath();
-    ctx.moveTo(ex - ew, ey + 1);
-    // Upper lid: arches high toward inner third then curves to outer corner
-    ctx.bezierCurveTo(ex - ew * 0.2, ey - eh * 1.25, ex + ew * 0.35, ey - eh * 1.15, ex + ew, ey - 1);
-    // Lower lid: gentler arc back
-    ctx.bezierCurveTo(ex + ew * 0.4, ey + eh * 0.72, ex - ew * 0.25, ey + eh * 0.72, ex - ew, ey + 1);
-    ctx.closePath();
-  }
-
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
-
-    // Gentle idle float
-    const fy = Math.sin(this.t * 0.6) * 4;
-    const fx = Math.sin(this.t * 0.37) * 1.5;
-
+    const fy = Math.sin(this.t * 0.6) * 4, fx = Math.sin(this.t * 0.37) * 1.5;
     ctx.save();
     ctx.translate(this.cx + fx, this.cy + fy);
 
-    this._drawNeckShoulder(ctx);
-    this._drawHead(ctx);
-    this._drawFacialPlanes(ctx);
-    this._drawEyebrows(ctx);
-    this._drawEyes(ctx);
-    this._drawNose(ctx);
-    this._drawMouth(ctx);
-
-    ctx.restore();
-  }
-
-  _drawNeckShoulder(ctx) {
-    const ng = ctx.createLinearGradient(0, 148, 0, 240);
-    ng.addColorStop(0, '#14202e');
-    ng.addColorStop(1, 'rgba(10,14,20,0)');
-    ctx.beginPath();
-    ctx.moveTo(-36, 148);
-    ctx.lineTo(36, 148);
-    ctx.lineTo(70, 230);
-    ctx.lineTo(-70, 230);
-    ctx.closePath();
-    ctx.fillStyle = ng;
-    ctx.fill();
-
-    // Shoulders
-    const sg = ctx.createRadialGradient(0, 230, 0, 0, 230, 200);
-    sg.addColorStop(0, 'rgba(18,28,42,0.9)');
-    sg.addColorStop(0.5, 'rgba(12,18,28,0.5)');
-    sg.addColorStop(1, 'rgba(8,11,16,0)');
-    ctx.beginPath();
-    ctx.ellipse(0, 230, 200, 60, 0, 0, Math.PI * 2);
-    ctx.fillStyle = sg;
-    ctx.fill();
-  }
-
-  _drawHead(ctx) {
-    const hw = 116, hh = 148;
-
-    // Outer ambient glow — emanates from the eyes
-    const og = ctx.createRadialGradient(0, -40, 30, 0, -40, 220);
-    og.addColorStop(0,    'rgba(59,130,246,0.06)');
-    og.addColorStop(0.55, 'rgba(59,130,246,0.03)');
-    og.addColorStop(1,    'rgba(59,130,246,0)');
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw * 1.6, hh * 1.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = og;
-    ctx.fill();
-
-    // Face base — warm dark skin, not blue-black
-    const fg = ctx.createRadialGradient(-18, -55, 0, 0, 0, Math.max(hw, hh) * 1.05);
-    fg.addColorStop(0,    '#232030');
-    fg.addColorStop(0.3,  '#1c1a28');
-    fg.addColorStop(0.62, '#141220');
-    fg.addColorStop(0.85, '#0d0c18');
-    fg.addColorStop(1,    '#080810');
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = fg;
-    ctx.fill();
-
-    // Forehead highlight (brow bone)
-    const fh = ctx.createRadialGradient(-15, -80, 0, -15, -80, 100);
-    fh.addColorStop(0, 'rgba(200,195,230,0.055)');
-    fh.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = fh;
-    ctx.fill();
-
-    // Jaw shadow — darker bottom third
-    const js = ctx.createRadialGradient(0, 120, 0, 0, 120, 120);
-    js.addColorStop(0, 'rgba(0,0,0,0.38)');
-    js.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = js;
-    ctx.fill();
-
-    // Edge — very subtle blue outline
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(59,130,246,0.18)';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-  }
-
-  _drawFacialPlanes(ctx) {
-    const hw = 116, hh = 148;
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Cheekbone highlights
-    for (const [sx, dir] of [[-1, -1], [1, 1]]) {
-      const cx = sx * 72, cy2 = 10;
-      const cg = ctx.createRadialGradient(cx, cy2, 0, cx, cy2, 45);
-      cg.addColorStop(0, 'rgba(200,190,220,0.05)');
-      cg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = cg;
-      ctx.fillRect(cx - 50, cy2 - 50, 100, 100);
-    }
-
-    // Temple shadows
-    for (const tx of [-95, 95]) {
-      const tg = ctx.createRadialGradient(tx, -20, 0, tx, -20, 55);
-      tg.addColorStop(0, 'rgba(0,0,0,0.28)');
-      tg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = tg;
-      ctx.fillRect(tx - 60, -75, 120, 120);
-    }
-
-    ctx.restore();
-  }
-
-  _drawEyebrows(ctx) {
-    ctx.save();
-    // Natural arch — not too angular
-    ctx.strokeStyle = 'rgba(180,170,210,0.52)';
-    ctx.lineWidth   = 2.8;
-    ctx.lineCap     = 'round';
-
-    // Left brow
-    ctx.beginPath();
-    ctx.moveTo(-68, -70);
-    ctx.bezierCurveTo(-50, -80, -28, -80, -18, -76);
-    ctx.stroke();
-
-    // Right brow
-    ctx.beginPath();
-    ctx.moveTo(18, -76);
-    ctx.bezierCurveTo(28, -80, 50, -80, 68, -70);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  _drawEyes(ctx) {
     const ba = this.blinking
-      ? Math.min(1, this.blinkProg < 1 ? this.blinkProg : 2 - this.blinkProg)
-      : 0;
-    this._drawEye(ctx, -44, -40, 24, 13, ba);
-    this._drawEye(ctx,  44, -40, 24, 13, ba);
-  }
+      ? Math.min(1, this.blinkProg < 1 ? this.blinkProg : 2 - this.blinkProg) : 0;
 
-  _drawEye(ctx, ex, ey, ew, eh, blinkAmt) {
-    const lx = this.lookX * 5;
-    const ly = this.lookY * 3;
+    const eyeLBot = this._base[24][1], eyeLTop = this._base[22][1];
+    const eyeRBot = this._base[28][1], eyeRTop = this._base[26][1];
 
-    // Eye socket — subtle shadow around eye
-    const ss = ctx.createRadialGradient(ex, ey, 0, ex, ey, ew * 1.9);
-    ss.addColorStop(0, 'rgba(0,0,8,0.6)');
-    ss.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = ss;
-    ctx.fillRect(ex - ew * 2, ey - eh * 2, ew * 4, eh * 4);
+    const V = this._base.map(([x, y], i) => {
+      let dy = 0;
+      if (i === this._blinkIdxL) dy = ba * (eyeLBot - eyeLTop) * 0.95;
+      if (i === this._blinkIdxR) dy = ba * (eyeRBot - eyeRTop) * 0.95;
+      if (this._talkIdx.includes(i)) dy = this.mouthOpen * 10;
+      return [x, y + dy];
+    });
 
-    // Clip to almond eye shape for everything inside
-    ctx.save();
-    this._eyePath(ctx, ex, ey, ew, eh);
-    ctx.clip();
-
-    // Dark sclera base (not white — this is a stylized mask)
-    ctx.fillStyle = '#08101c';
-    ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, (eh + 2) * 2);
-
-    // Iris glow halo
-    const igr = 16;
-    const ig = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, igr);
-    ig.addColorStop(0,    'rgba(80,170,255,0.5)');
-    ig.addColorStop(0.4,  'rgba(59,130,246,0.2)');
-    ig.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = ig;
-    ctx.fillRect(ex - igr, ey - igr, igr * 2, igr * 2);
-
-    // Iris — radial gradient with slight limbal ring
-    const irisG = ctx.createRadialGradient(ex + lx, ey + ly, 0, ex + lx, ey + ly, 11);
-    irisG.addColorStop(0,    '#c0e0ff');
-    irisG.addColorStop(0.2,  '#60a5fa');
-    irisG.addColorStop(0.55, '#2563eb');
-    irisG.addColorStop(0.82, '#1a3a80');
-    irisG.addColorStop(1,    '#0a1830');
+    // Ambient face glow
+    const ag = ctx.createRadialGradient(0, -20, 0, 0, -20, 185);
+    ag.addColorStop(0, 'rgba(40,100,200,0.08)');
+    ag.addColorStop(1, 'rgba(0,0,20,0)');
+    ctx.fillStyle = ag;
     ctx.beginPath();
-    ctx.arc(ex + lx, ey + ly, 11, 0, Math.PI * 2);
-    ctx.fillStyle = irisG;
+    ctx.ellipse(0, 0, 145, 178, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Pupil
-    ctx.beginPath();
-    ctx.arc(ex + lx, ey + ly, 4.8, 0, Math.PI * 2);
-    ctx.fillStyle = '#010308';
-    ctx.fill();
-
-    // Main catchlight
-    ctx.beginPath();
-    ctx.arc(ex + lx + 3.5, ey + ly - 3.5, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(220, 240, 255, 0.95)';
-    ctx.fill();
-
-    // Secondary small catchlight
-    ctx.beginPath();
-    ctx.arc(ex + lx - 2, ey + ly + 3, 1.1, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(160,210,255,0.5)';
-    ctx.fill();
-
-    // Eyelid blink — upper lid sweeps down
-    if (blinkAmt > 0.01) {
-      const lidH = (eh * 2 + 4) * blinkAmt;
-      ctx.fillStyle = '#141020';
-      ctx.fillRect(ex - ew - 2, ey - eh - 2, (ew + 2) * 2, lidH + 1);
-    }
-
-    ctx.restore();
-
-    // Upper eyelid crease — subtle line above eye
-    ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(ex - ew + 2, ey - eh * 0.5);
-    ctx.bezierCurveTo(ex - ew * 0.3, ey - eh * 1.6, ex + ew * 0.3, ey - eh * 1.55, ex + ew - 2, ey - eh * 0.3);
-    ctx.stroke();
-    ctx.restore();
-
-    // Eye outline — almond shape edge
-    ctx.save();
-    this._eyePath(ctx, ex, ey, ew, eh);
-    ctx.strokeStyle = 'rgba(80,150,255,0.28)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.restore();
-
-    // Upper lash line — dark line along upper lid edge
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(ex - ew, ey + 1);
-    ctx.bezierCurveTo(ex - ew * 0.2, ey - eh * 1.25, ex + ew * 0.35, ey - eh * 1.15, ex + ew, ey - 1);
-    ctx.strokeStyle = 'rgba(10,8,25,0.85)';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  _drawNose(ctx) {
-    ctx.save();
-
-    // Bridge — two subtle highlight lines from between brows
-    ctx.strokeStyle = 'rgba(200,190,230,0.13)';
-    ctx.lineWidth = 1;
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    ctx.moveTo(-6, -30);
-    ctx.bezierCurveTo(-9, 0, -10, 25, -8, 42);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(6, -30);
-    ctx.bezierCurveTo(9, 0, 10, 25, 8, 42);
-    ctx.stroke();
-
-    // Nose tip — soft rounded volume
-    const ntg = ctx.createRadialGradient(0, 44, 0, 0, 44, 18);
-    ntg.addColorStop(0, 'rgba(200,185,220,0.06)');
-    ntg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = ntg;
-    ctx.beginPath();
-    ctx.arc(0, 44, 18, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Nostril shadow shapes — actual almond-shaped nostrils
-    ctx.fillStyle = 'rgba(4,4,12,0.6)';
-    ctx.save();
-    ctx.translate(-11, 46);
-    ctx.rotate(-0.25);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 5, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(11, 46);
-    ctx.rotate(0.25);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 5, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.restore();
-  }
-
-  _drawMouth(ctx) {
-    const my = 82;
-    const mw = 34;
-    const op = this.mouthOpen * 14; // max 14px opening
-
-    ctx.save();
-
-    // Philtrum — very subtle vertical shadow above lip
-    const phg = ctx.createLinearGradient(0, my - 22, 0, my - 6);
-    phg.addColorStop(0, 'rgba(0,0,0,0)');
-    phg.addColorStop(1, 'rgba(0,0,0,0.2)');
-    ctx.fillStyle = phg;
-    ctx.beginPath();
-    ctx.ellipse(0, my - 14, 5, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (op > 0.5) {
-      // Mouth cavity when open
+    // Mesh triangles
+    for (const [a, b, c] of this._tris) {
+      const [ax, ay] = V[a], [bx, by] = V[b], [cx2, cy2] = V[c];
+      const mcx = (ax + bx + cx2) / 3, mcy = (ay + by + cy2) / 3;
+      const { fill, edge } = this._shade(mcx, mcy);
       ctx.beginPath();
-      // Upper lip boundary curves up
-      ctx.moveTo(-mw * 0.85, my - 2);
-      ctx.bezierCurveTo(-mw * 0.4, my - 2, -mw * 0.12, my - 8 - op * 0.5, 0, my - 9 - op * 0.5);
-      ctx.bezierCurveTo(mw * 0.12, my - 8 - op * 0.5, mw * 0.4, my - 2, mw * 0.85, my - 2);
-      // Lower lip boundary curves down
-      ctx.bezierCurveTo(mw * 0.45, my + 3 + op, -mw * 0.45, my + 3 + op, -mw * 0.85, my - 2);
+      ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx2, cy2);
       ctx.closePath();
-
-      const mg = ctx.createLinearGradient(0, my - 9, 0, my + op + 3);
-      mg.addColorStop(0,   'rgba(10,5,20,0.96)');
-      mg.addColorStop(0.4, 'rgba(6,3,12,0.88)');
-      mg.addColorStop(1,   'rgba(4,2,8,0.7)');
-      ctx.fillStyle = mg;
+      ctx.fillStyle = fill;
       ctx.fill();
-
-      // Teeth — very subtle, only when well open
-      if (op > 5) {
-        const visH = Math.min((op - 5) * 0.6, 5);
-        ctx.fillStyle = 'rgba(210,205,230,0.1)';
-        ctx.beginPath();
-        ctx.rect(-mw * 0.6, my - 2, mw * 1.2, visH);
-        ctx.fill();
-      }
+      ctx.strokeStyle = edge;
+      ctx.lineWidth = 0.55;
+      ctx.stroke();
     }
 
-    // Upper lip — cupid's bow shape
-    ctx.beginPath();
-    ctx.moveTo(-mw, my - 2);
-    // Left side of upper lip
-    ctx.bezierCurveTo(-mw * 0.65, my - 3, -mw * 0.28, my - 5 - op * 0.45, -mw * 0.08, my - 8 - op * 0.5);
-    // Cupid's bow peak (center dip then up)
-    ctx.bezierCurveTo(-mw * 0.04, my - 9 - op * 0.5, mw * 0.04, my - 9 - op * 0.5, mw * 0.08, my - 8 - op * 0.5);
-    // Right side of upper lip
-    ctx.bezierCurveTo(mw * 0.28, my - 5 - op * 0.45, mw * 0.65, my - 3, mw, my - 2);
-    ctx.strokeStyle = 'rgba(160,130,180,0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = 'round';
-    ctx.stroke();
+    // Eye glows over mesh
+    const lx = this.lookX * 6, ly = this.lookY * 4;
+    const fade = 1 - ba;
+    for (const cents of [
+      [(V[21][0]+V[22][0]+V[23][0]+V[24][0])/4, (V[21][1]+V[22][1]+V[23][1]+V[24][1])/4],
+      [(V[25][0]+V[26][0]+V[27][0]+V[28][0])/4, (V[25][1]+V[26][1]+V[27][1]+V[28][1])/4],
+    ]) {
+      const ex = cents[0] + lx, ey = cents[1] + ly;
+      const gi = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
+      gi.addColorStop(0,   `rgba(160,220,255,${(0.88*fade).toFixed(2)})`);
+      gi.addColorStop(0.3, `rgba(70,150,255,${(0.48*fade).toFixed(2)})`);
+      gi.addColorStop(0.7, `rgba(20,70,200,${(0.18*fade).toFixed(2)})`);
+      gi.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.arc(ex, ey, 14, 0, Math.PI * 2);
+      ctx.fillStyle = gi; ctx.fill();
+      ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(1,3,10,${(0.97*fade+0.03).toFixed(2)})`; ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + 3, ey - 3, 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(230,245,255,${(0.88*fade).toFixed(2)})`; ctx.fill();
+    }
 
-    // Lower lip — full, rounded
-    ctx.beginPath();
-    ctx.moveTo(-mw * 0.88, my - 1);
-    ctx.bezierCurveTo(-mw * 0.45, my + 4 + op, mw * 0.45, my + 4 + op, mw * 0.88, my - 1);
-    ctx.strokeStyle = 'rgba(140,110,165,0.5)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Lip fill — very subtle color
-    ctx.beginPath();
-    ctx.moveTo(-mw, my - 2);
-    ctx.bezierCurveTo(-mw * 0.65, my - 3, -mw * 0.08, my - 9 - op * 0.5, 0, my - 9 - op * 0.5);
-    ctx.bezierCurveTo(mw * 0.08, my - 9 - op * 0.5, mw * 0.65, my - 3, mw, my - 2);
-    ctx.bezierCurveTo(mw * 0.45, my + 4 + op, -mw * 0.45, my + 4 + op, -mw, my - 2);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(120,80,130,0.08)';
-    ctx.fill();
-
-    // Lip line — the meeting seam
-    ctx.beginPath();
-    ctx.moveTo(-mw * 0.85, my - 1.5);
-    ctx.bezierCurveTo(-mw * 0.5, my, mw * 0.5, my, mw * 0.85, my - 1.5);
-    ctx.strokeStyle = 'rgba(40,20,55,0.7)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // Vertex glow dots
+    for (const [vx, vy] of V) {
+      ctx.beginPath(); ctx.arc(vx, vy, 1.4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(160,225,255,0.38)'; ctx.fill();
+    }
 
     ctx.restore();
+  }
+
+  _shade(cx, cy) {
+    const R = 138;
+    const nx = cx / R, ny = cy / R;
+    const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+    const dot = Math.max(0, -0.42 * nx - 0.60 * ny + 0.68 * nz);
+
+    if ((cx + 55) ** 2 + (cy + 50) ** 2 < 24 * 24 ||
+        (cx - 55) ** 2 + (cy + 50) ** 2 < 24 * 24) {
+      const b = 6 + dot * 14;
+      return { fill: `hsl(220,85%,${b.toFixed(0)}%)`, edge: 'rgba(80,180,255,0.12)' };
+    }
+
+    const b   = 14 + dot * 52;
+    const hue = 212 + cy * 0.04;
+    const sat = Math.max(30, 70 - Math.abs(cx) * 0.2);
+    const eb  = Math.min(80, b + 14);
+    return {
+      fill: `hsl(${hue.toFixed(1)},${sat.toFixed(0)}%,${b.toFixed(0)}%)`,
+      edge: `hsl(${hue.toFixed(1)},${sat.toFixed(0)}%,${eb.toFixed(0)}%)`,
+    };
   }
 
   setTalking(v) { this.talking = v; }
