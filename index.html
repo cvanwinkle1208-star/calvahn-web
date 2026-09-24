@@ -929,10 +929,25 @@ async function startConversation() {
     }
   } catch {}
 
-  const n = 32 + Math.floor(Math.random() * 10);
-  const opener = city
-    ? `I'm keeping watch on ${n} systems right now — and someone in ${city} just walked in. I'm Moritz. What's your name?`
-    : `I'm keeping watch on ${n} systems right now. You just showed up. I'm Moritz — what's your name?`;
+  // Use real live counts if the pulse bar already loaded them
+  const svcEl   = document.getElementById('p-svc');
+  const nodeEl  = document.getElementById('p-nodes');
+  const liveSvc = svcEl  && svcEl.textContent  !== '—' ? svcEl.textContent  : null;
+  const liveNode= nodeEl && nodeEl.textContent !== '—' ? nodeEl.textContent : null;
+  const sysLine = liveSvc  ? `${liveSvc} active services across ${liveNode || 'several'} nodes`
+                : liveNode ? `${liveNode} nodes running`
+                : null;
+
+  let opener;
+  if (city && sysLine) {
+    opener = `Someone in ${city} just walked in. I'm Moritz — I keep watch on this place. ${sysLine} right now. What's your name?`;
+  } else if (city) {
+    opener = `Someone in ${city} just walked in. I'm Moritz. I keep watch so nothing goes wrong unnoticed. What's your name?`;
+  } else if (sysLine) {
+    opener = `I'm Moritz. ${sysLine} right now — everything I'm responsible for. What brings you here, and what's your name?`;
+  } else {
+    opener = `I'm Moritz. I keep watch so nothing goes wrong unnoticed. You just showed up — what's your name?`;
+  }
 
   messages.push({ role: 'assistant', content: opener });
   await delay(350);
