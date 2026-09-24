@@ -55,13 +55,33 @@
     flex: 1 1 auto;
     min-width: 0;
     max-width: 560px;
+    position: relative;
+    z-index: 1;
   }
 
-  /* ── Face panel — hidden on landing, shown only in chat mode ── */
+  /* ── Face panel — ghost on landing, full apparition in chat ── */
+  @keyframes ghost-breathe {
+    0%, 100% { opacity: 0.09; }
+    50%       { opacity: 0.14; }
+  }
+
   .face-panel {
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: center;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.09;
+    pointer-events: none;
+    z-index: 0;
+    animation: ghost-breathe 5s ease-in-out infinite;
+  }
+
+  /* Hide landing ghost on mobile — too small to look good */
+  @media (max-width: 767px) {
+    .face-panel { display: none; }
   }
 
   /* ── CHAT MODE — full-viewport immersive (no transitions, JS cross-fades) */
@@ -87,11 +107,18 @@
   }
 
   #page.chat-mode .face-panel {
+    position: relative;
+    left: auto; top: auto;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: auto;
+    animation: none;
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
     max-width: none;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -171,7 +198,7 @@
     height: auto;
     display: block;
     cursor: pointer;
-    filter: blur(2.5px);
+    filter: blur(4px);
   }
 
   /* Large canvas in chat mode — face is the scene */
@@ -181,11 +208,6 @@
     max-width: 85vw;
     cursor: default;
     filter: blur(2px);
-  }
-
-  /* Show face panel only in chat mode */
-  #page.chat-mode .face-panel {
-    display: flex !important;
   }
 
   /* ── Chat section ──────────────────────────────────────────── */
@@ -606,7 +628,21 @@ class MoritzFace {
     this.wordSpike = 0;
     this.blinkT    = 0; this.nextBlink = 2.5 + Math.random() * 5;
     this.blinking  = false; this.blinkProg = 0;
+    this.thinking  = false;
+    this.thinkDim  = 1.0;
     this._dead     = false;
+
+    // Atmospheric particles — slow upward drift
+    this._particles = Array.from({length: 24}, () => ({
+      x:  (Math.random() - 0.5) * 380,
+      y:  -180 + Math.random() * 460,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: -0.05 - Math.random() * 0.10,
+      r:  0.6 + Math.random() * 1.4,
+      a:  0.055 + Math.random() * 0.10,
+      tw: Math.random() * Math.PI * 2,
+      ts: 0.5 + Math.random() * 1.4,
+    }));
 
     this._tick();
   }
@@ -633,6 +669,15 @@ class MoritzFace {
       this.mouthOpen *= 0.78;
     }
     this.wordSpike *= 0.82;
+    // Thinking dim — smoothly lerp to target
+    const dimTarget = this.thinking ? 0.52 : 1.0;
+    this.thinkDim += (dimTarget - this.thinkDim) * 0.045;
+    // Particles
+    for (const p of this._particles) {
+      p.x += p.vx; p.y += p.vy; p.tw += dt * p.ts;
+      if (p.y < -190) { p.y = 285; p.x = (Math.random()-0.5)*380; }
+      if (Math.abs(p.x) > 196) p.vx *= -1;
+    }
     this._draw();
     requestAnimationFrame(() => this._tick());
   }
@@ -668,7 +713,8 @@ class MoritzFace {
     const fd = 1 - ba;
     const op = this.mouthOpen;
     const bl = this._blob.bind(this);
-    const ap = v => +(v * pulse).toFixed(3);
+    const td = this.thinkDim;
+    const ap = v => +(v * pulse * td).toFixed(3);
 
     // ── Layered face mist ─────────────────────────────────────
     bl(  0,  -5, 115, 162, 52, 135, 232, ap(0.28));
@@ -707,15 +753,32 @@ class MoritzFace {
     // Lower fog edge drops
     bl(0, 89 + gap * 0.70, 20, 8, 82, 158, 242, ap(0.09 + op * 0.05));
 
+    // ── Atmospheric particles ─────────────────────────────────
+    for (const p of this._particles) {
+      const tw = 0.60 + Math.sin(p.tw) * 0.40;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(110,185,255,${(p.a * tw * td).toFixed(3)})`;
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 
-  setTalking(v) { this.talking = v; }
-  destroy()     { this._dead = true; }
+  setTalking(v) {
+    this.talking = v;
+    if (v) this.thinking = false;
+  }
+  setThinking(v) { this.thinking = v; }
+  destroy()      { this._dead = true; }
 }
 
-// ── Init face (lazy — created when chat mode opens) ────────────
+// ── Init face — runs immediately so ghost appears on landing ───
 let _face = null;
+(function() {
+  const cv = document.getElementById('moritz-canvas');
+  if (cv) _face = new MoritzFace(cv);
+})();
 
 // ── TTS ────────────────────────────────────────────────────────
 let voices = [];
@@ -776,7 +839,6 @@ async function openChat() {
   const cv = document.getElementById('moritz-canvas');
   cv.style.cursor = 'default';
   cv.onclick = null;
-  if (!_face) _face = new MoritzFace(cv);
 
   // Fade in — apparition + chat materialise
   page.style.transition = 'opacity 1.3s ease';
@@ -822,11 +884,26 @@ function addMsg(role, text, thinking) {
   const div  = document.createElement('div');
   div.className = 'msg ' + role;
   const name = role === 'moritz' ? 'Moritz' : 'You';
-  div.innerHTML = `<div class="msg-name">${name}</div><div class="msg-bubble${thinking ? ' thinking' : ''}">${esc(text)}</div>`;
+  // Moritz messages start empty and typewrite in; others appear instantly
+  const initial = (role === 'moritz' && !thinking) ? '' : esc(text);
+  div.innerHTML = `<div class="msg-name">${name}</div><div class="msg-bubble${thinking ? ' thinking' : ''}">${initial}</div>`;
   div.dataset.thinking = thinking ? '1' : '';
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
+  if (role === 'moritz' && !thinking) _typewriteMsg(div, text);
   return div;
+}
+
+function _typewriteMsg(div, text) {
+  const bubble = div.querySelector('.msg-bubble');
+  const wrap   = document.getElementById('messages');
+  let i = 0;
+  const step = () => {
+    bubble.textContent = text.slice(0, ++i);
+    wrap.scrollTop = wrap.scrollHeight;
+    if (i < text.length) setTimeout(step, 38);
+  };
+  setTimeout(step, 60);
 }
 
 function removeThinking() {
@@ -840,9 +917,25 @@ function esc(s) {
 
 // ── Conversation ───────────────────────────────────────────────
 async function startConversation() {
-  const opener = "Hi, I'm Moritz. What's your name?";
+  // Quick geo fetch — best-effort, 1.8s timeout
+  let city = null;
+  try {
+    const g = await fetch('https://ip-api.com/json/?fields=city,regionName,country',
+      { signal: AbortSignal.timeout(1800) });
+    const gj = await g.json();
+    if (gj.city) {
+      city = gj.city;
+      if (!geoData) geoData = { city: gj.city, region: gj.regionName, country: gj.country };
+    }
+  } catch {}
+
+  const n = 32 + Math.floor(Math.random() * 10);
+  const opener = city
+    ? `I'm keeping watch on ${n} systems right now — and someone in ${city} just walked in. I'm Moritz. What's your name?`
+    : `I'm keeping watch on ${n} systems right now. You just showed up. I'm Moritz — what's your name?`;
+
   messages.push({ role: 'assistant', content: opener });
-  await delay(200);
+  await delay(350);
   addMsg('moritz', opener);
   speak(opener);
 }
@@ -865,6 +958,7 @@ async function sendMsg() {
     if (words.length <= 3) userName = words[words.length - 1].replace(/[^a-zA-Z]/g, '');
   }
 
+  if (_face) _face.setThinking(true);
   addMsg('moritz', 'Thinking…', true);
 
   try {
@@ -879,6 +973,7 @@ async function sendMsg() {
 
     if (data.geo && !geoData) geoData = data.geo;
 
+    if (_face) _face.setThinking(false);
     removeThinking();
     const cleanReply = reply.replace(/\[END_CONVERSATION\]/g, '').trim();
     messages.push({ role: 'assistant', content: reply });
@@ -897,6 +992,7 @@ async function sendMsg() {
       return;
     }
   } catch {
+    if (_face) _face.setThinking(false);
     removeThinking();
     const err = "Lost my train of thought — try again!";
     messages.push({ role: 'assistant', content: err });
